@@ -1,13 +1,23 @@
 package com.kaitokitaya.easytransfer.httpServer
 
-import android.util.Log
+import io.ktor.events.EventDefinition
 import io.ktor.http.*
-import io.ktor.server.application.call
+import io.ktor.http.cio.Response
+import io.ktor.server.application.*
+import io.ktor.server.application.hooks.ReceiveRequestBytes
+import io.ktor.server.application.hooks.ResponseSent
 import io.ktor.server.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.callloging.CallLogging
+import io.ktor.server.plugins.origin
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.uri
 import io.ktor.server.response.respondText
+import io.ktor.server.response.responseType
 import io.ktor.server.routing.routing
+import org.slf4j.LoggerFactory
+import org.slf4j.event.Level
 import timber.log.Timber
 
 sealed class ServerStatus {
@@ -20,14 +30,16 @@ object HttpServer {
     private var server: NettyApplicationEngine? = null
     private const val TAG = "HttpServer"
     const val PORT = 8080
+//    private val logger = LoggerFactory.getLogger("ApplicationLogger")
+    private val requestLogs = mutableListOf<String>()
+    private val responseLogs = mutableListOf<String>()
+
     fun start(): ServerStatus {
         try {
             server = embeddedServer(Netty, port = PORT) {
-                routing {
-                    get("/") {
-                        call.respondText("Hello, World!", ContentType.Text.Html)
-                    }
-                }
+//                callLoggingModule()
+                routingModule()
+                eventSubscriptionModule()
             }
             server?.start(wait = false)
             Timber.tag(TAG).d("Ktor server started on port $PORT")
@@ -48,4 +60,46 @@ object HttpServer {
             return ServerStatus.Active
         }
     }
+
+    private fun Application.callLoggingModule() {
+        install(CallLogging) {
+            level = Level.INFO
+            filter { call -> call.request.httpMethod.value == "GET" }
+            mdc("method") { call -> call.request.httpMethod.value }
+            mdc("uri") { call -> call.request.uri }
+            mdc("clientIP") { call -> call.request.origin.remoteHost }
+        }
+    }
+
+    private fun Application.eventSubscriptionModule() {
+        install(ApplicationMonitoringPlugin)
+        environment.monitor.subscribe(ResponseSendEvent) { call ->
+            val logEntry = "Header: ${call.response.headers}, " +
+                    "Type: ${call.response.responseType},"
+            val uri = call.request.uri
+            val method  = call.request.httpMethod.value
+            val clientIP = call.request.origin.remoteHost
+            Timber.tag(TAG).d("url: $uri, method: $method, clientIP: $clientIP")
+            val a = call.response.headers.toString()
+            responseLogs.add(logEntry)
+        }
+    }
+
+    private val ResponseSendEvent: EventDefinition<ApplicationCall> = EventDefinition()
+
+    private val ApplicationMonitoringPlugin = createApplicationPlugin(name = "ApplicationMonitoringPlugin") {
+        on(ResponseSent) { call ->
+            this@createApplicationPlugin.application.environment.monitor.raise(ResponseSendEvent, call)
+        }
+    }
+
+    private fun Application.routingModule() {
+        routing {
+            get("/") {
+                call.respondText("Hello, World!", ContentType.Text.Html)
+            }
+        }
+    }
+
+
 }
