@@ -12,6 +12,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +27,9 @@ import com.kaitokitaya.easytransfer.originalType.VoidCallback
 @Composable
 fun MainScreen(viewModel: MainScreenViewModel) {
     val ipAddress = viewModel.ipAddress.collectAsState()
+    LaunchedEffect(Unit) {
+        viewModel.startStorageAccessPermissionRequest()
+    }
     MainPage(
         ipAddress = ipAddress.value,
         onTapStart = { viewModel.onTapStart() },

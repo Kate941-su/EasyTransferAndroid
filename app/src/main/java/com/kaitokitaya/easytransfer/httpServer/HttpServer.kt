@@ -64,6 +64,7 @@ object HttpServer {
 
     private fun Application.callLoggingModule() {
         install(CallLogging) {
+            // TODO: Logging with log4j
             level = Level.INFO
             filter { call -> call.request.httpMethod.value == "GET" }
             mdc("method") { call -> call.request.httpMethod.value }
@@ -107,6 +108,4 @@ object HttpServer {
             }
         }
     }
-
-
 }
