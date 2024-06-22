@@ -30,14 +30,15 @@ object HttpServer {
     private var server: NettyApplicationEngine? = null
     private const val TAG = "HttpServer"
     const val PORT = 8080
-//    private val logger = LoggerFactory.getLogger("ApplicationLogger")
+
+    private val logger = LoggerFactory.getLogger("ApplicationLogger")
     private val requestLogs = mutableListOf<String>()
     private val responseLogs = mutableListOf<String>()
 
     fun start(): ServerStatus {
         try {
             server = embeddedServer(Netty, port = PORT) {
-//                callLoggingModule()
+                callLoggingModule()
                 routingModule()
                 eventSubscriptionModule()
             }
@@ -72,26 +73,32 @@ object HttpServer {
     }
 
     private fun Application.eventSubscriptionModule() {
-        install(ApplicationMonitoringPlugin)
+        install(responsePlugin)
         environment.monitor.subscribe(ResponseSendEvent) { call ->
             val logEntry = "Header: ${call.response.headers}, " +
                     "Type: ${call.response.responseType},"
             val uri = call.request.uri
-            val method  = call.request.httpMethod.value
+            val method = call.request.httpMethod.value
             val clientIP = call.request.origin.remoteHost
             Timber.tag(TAG).d("url: $uri, method: $method, clientIP: $clientIP")
-            val a = call.response.headers.toString()
             responseLogs.add(logEntry)
         }
     }
 
     private val ResponseSendEvent: EventDefinition<ApplicationCall> = EventDefinition()
 
+    private val responsePlugin = createApplicationPlugin(name = "ResponsePlugin") {
+        on(ResponseSent) { call ->
+                this@createApplicationPlugin.application.environment.monitor.raise(ResponseSendEvent, call)
+        }
+    }
+
     private val ApplicationMonitoringPlugin = createApplicationPlugin(name = "ApplicationMonitoringPlugin") {
         on(ResponseSent) { call ->
             this@createApplicationPlugin.application.environment.monitor.raise(ResponseSendEvent, call)
         }
     }
+
 
     private fun Application.routingModule() {
         routing {

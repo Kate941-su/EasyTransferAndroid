@@ -69,8 +69,8 @@ dependencies {
     implementation(libs.ktor.ktor.server.call.logging)
 
     // Log module
-    implementation(libs.logback.classic)
-
+    implementation(libs.slf4j.api)
+    implementation(libs.logback.classic.v135)
     // Test Tool
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
