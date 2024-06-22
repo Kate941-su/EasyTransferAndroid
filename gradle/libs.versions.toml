@@ -6,11 +6,13 @@ junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
 kotlinxCoroutinesCore = "1.8.1"
+ktorServerCallLoggingVersion = "2.3.12"
 ktorServerCore = "2.3.12"
 ktorServerNetty = "2.3.12"
 lifecycleRuntimeKtx = "2.8.2"
 activityCompose = "1.9.0"
 composeBom = "2023.08.00"
+logbackClassic = "1.5.6"
 timber = "5.0.1"
 uiDesktop = "1.6.8"
 navigationCompose = "2.7.7"
@@ -31,9 +33,11 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
+ktor-ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktorServerCallLoggingVersion" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktorServerCore" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktorServerNetty" }
 androidx-ui-desktop = { group = "androidx.compose.ui", name = "ui-desktop", version.ref = "uiDesktop" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logbackClassic" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 

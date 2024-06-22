@@ -66,6 +66,10 @@ dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.ktor.ktor.server.call.logging)
+
+    // Log module
+    implementation(libs.logback.classic)
 
     // Test Tool
     testImplementation(libs.junit)
