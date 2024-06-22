@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -22,24 +23,29 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.kaitokitaya.easytransfer.R
+import com.kaitokitaya.easytransfer.originalType.VoidCallback
 
 @Composable
 fun MainScreen(viewModel: MainScreenViewModel) {
-    MainPage()
+    MainPage(
+        onTapStart = { viewModel.onTapStart() }
+    )
 }
 
 @Composable
-fun MainPage() {
+fun MainPage(
+    onTapStart: VoidCallback
+) {
     Scaffold { innerPadding ->
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            Button(onClick = { }, colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)) {
+            Button(onClick = onTapStart, colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)) {
                 Text(text = "start")
             }
             IconButton(onClick = {  }) {
@@ -52,5 +58,7 @@ fun MainPage() {
 @Preview(showSystemUi = true)
 @Composable
 fun MainScreenPreview() {
-    MainPage()
+    MainPage(
+        onTapStart = {}
+    )
 }
