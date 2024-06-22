@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.kaitokitaya.easytransfer.httpServer.ConnectiveManagerWrapper
 import com.kaitokitaya.easytransfer.mainScreen.MainScreen
 import com.kaitokitaya.easytransfer.mainScreen.MainScreenViewModel
 import com.kaitokitaya.easytransfer.router.AppRouter
@@ -19,8 +20,9 @@ class MainActivity : ComponentActivity() {
         Timber.plant(Timber.DebugTree())
         enableEdgeToEdge()
         setContent {
+            val connectiveManagerWrapper = ConnectiveManagerWrapper(context = this)
             val navController = rememberNavController()
-            val mainScreenViewModel = MainScreenViewModel()
+            val mainScreenViewModel = MainScreenViewModel(connectiveManagerWrapper = connectiveManagerWrapper)
             EasyTransferTheme {
                 // TODO: In product version, I have to change from Main to Splash
                 NavHost(navController = navController, startDestination = AppRouter.Main.PATH) {

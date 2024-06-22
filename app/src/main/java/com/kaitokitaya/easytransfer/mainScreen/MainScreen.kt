@@ -1,21 +1,18 @@
 package com.kaitokitaya.easytransfer.mainScreen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,33 +20,49 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.kaitokitaya.easytransfer.R
+import com.kaitokitaya.easytransfer.httpServer.HttpServer
 import com.kaitokitaya.easytransfer.originalType.VoidCallback
 
 @Composable
 fun MainScreen(viewModel: MainScreenViewModel) {
+    val ipAddress = viewModel.ipAddress.collectAsState()
     MainPage(
-        onTapStart = { viewModel.onTapStart() }
+        ipAddress = ipAddress.value,
+        onTapStart = { viewModel.onTapStart() },
+        onTapStop = { viewModel.onTapStop() }
     )
 }
 
 @Composable
 fun MainPage(
-    onTapStart: VoidCallback
+    ipAddress: String?,
+    onTapStart: VoidCallback,
+    onTapStop: VoidCallback,
 ) {
     Scaffold { innerPadding ->
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
+        Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(innerPadding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Button(onClick = onTapStart, colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)) {
-                Text(text = "start")
+            Row {
+                Button(onClick = onTapStart, colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)) {
+                    Text(text = "start")
+                }
+                Button(onClick = onTapStop, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
+                    Text(text = "stop")
+                }
+                IconButton(onClick = { }) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(id = R.drawable.baseline_wifi_24),
+                        contentDescription = "wifi"
+                    )
+                }
             }
-            IconButton(onClick = {  }) {
-                Icon(imageVector = ImageVector.vectorResource(id = R.drawable.baseline_wifi_24), contentDescription = "wifi")
+            if (ipAddress != null) {
+                Text(text = "Your IP Adress is: $ipAddress:${HttpServer.PORT}")
             }
         }
     }
@@ -59,6 +72,8 @@ fun MainPage(
 @Composable
 fun MainScreenPreview() {
     MainPage(
-        onTapStart = {}
+        ipAddress = "192.168.1.22:",
+        onTapStart = {},
+        onTapStop = {},
     )
 }

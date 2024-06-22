@@ -19,9 +19,10 @@ object HttpServer {
 
     private var server: NettyApplicationEngine? = null
     private const val TAG = "HttpServer"
+    const val PORT = 8080
     fun start(): ServerStatus {
         try {
-            server = embeddedServer(Netty, port = 8080) {
+            server = embeddedServer(Netty, port = PORT) {
                 routing {
                     get("/") {
                         call.respondText("Hello, World!", ContentType.Text.Html)
@@ -29,7 +30,7 @@ object HttpServer {
                 }
             }
             server?.start(wait = false)
-            Timber.tag(TAG).d("Ktor server started on port 8080")
+            Timber.tag(TAG).d("Ktor server started on port $PORT")
             return ServerStatus.Active
         } catch (e: Throwable) {
             // TODO: If needed I have to implement proper error handling.
