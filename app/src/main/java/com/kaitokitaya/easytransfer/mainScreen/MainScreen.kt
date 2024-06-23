@@ -23,12 +23,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.kaitokitaya.easytransfer.R
 import com.kaitokitaya.easytransfer.httpServer.HttpServer
 import com.kaitokitaya.easytransfer.originalType.VoidCallback
+import timber.log.Timber
 
 @Composable
 fun MainScreen(viewModel: MainScreenViewModel) {
     val ipAddress = viewModel.ipAddress.collectAsState()
     LaunchedEffect(Unit) {
         viewModel.startStorageAccessPermissionRequest()
+        val dir = viewModel.getDirectoryItem()
+        Timber.tag("MainScreen").d(dir?.toString())
     }
     MainPage(
         ipAddress = ipAddress.value,
