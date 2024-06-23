@@ -67,6 +67,8 @@ dependencies {
     implementation(libs.ktor.server.netty)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.ktor.ktor.server.call.logging)
+    implementation(libs.ktor.server.html.builder)
+    implementation("org.jetbrains.kotlin-wrappers:kotlin-css:1.0.0-pre.760")
 
     // Log module
     implementation(libs.slf4j.api)

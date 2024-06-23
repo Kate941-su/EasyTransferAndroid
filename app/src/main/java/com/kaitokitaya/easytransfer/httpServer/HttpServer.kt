@@ -1,13 +1,17 @@
 package com.kaitokitaya.easytransfer.httpServer
 
+import android.system.Os.link
 import io.ktor.events.EventDefinition
 import io.ktor.http.*
-import io.ktor.http.cio.Response
 import io.ktor.server.application.*
-import io.ktor.server.application.hooks.ReceiveRequestBytes
 import io.ktor.server.application.hooks.ResponseSent
 import io.ktor.server.routing.*
 import io.ktor.server.engine.*
+import io.ktor.server.html.respondHtml
+import io.ktor.server.http.content.resources
+import io.ktor.server.http.content.static
+import io.ktor.server.http.content.staticFiles
+import io.ktor.server.http.content.staticResources
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.origin
@@ -16,6 +20,21 @@ import io.ktor.server.request.uri
 import io.ktor.server.response.respondText
 import io.ktor.server.response.responseType
 import io.ktor.server.routing.routing
+import kotlinx.css.Color
+import kotlinx.css.CssBuilder
+import kotlinx.css.Margin
+import kotlinx.css.backgroundColor
+import kotlinx.css.body
+import kotlinx.css.color
+import kotlinx.css.left
+import kotlinx.css.margin
+import kotlinx.css.px
+import kotlinx.html.body
+import kotlinx.html.head
+import kotlinx.html.h1
+import kotlinx.html.link
+import kotlinx.html.p
+import kotlinx.html.title
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import timber.log.Timber
@@ -31,7 +50,7 @@ object HttpServer {
     private const val TAG = "HttpServer"
     const val PORT = 8080
 
-    private val logger = LoggerFactory.getLogger("ApplicationLogger")
+    private val logger by lazy { LoggerFactory.getLogger("ApplicationLogger") }
     private val requestLogs = mutableListOf<String>()
     private val responseLogs = mutableListOf<String>()
 
@@ -100,11 +119,33 @@ object HttpServer {
         }
     }
 
+    suspend inline fun ApplicationCall.respondCss(builder: CssBuilder.() -> Unit) {
+        this.respondText(CssBuilder().apply(builder).toString(), ContentType.Text.CSS)
+    }
 
     private fun Application.routingModule() {
         routing {
             get("/") {
-                call.respondText("Hello, World!", ContentType.Text.Html)
+                call.respondHtml {
+                    head {
+                        link(rel = "stylesheet", href = "/styles.css", type = "text/css")
+                    }
+                    body {
+                        h1 { +"Hello, World!" }
+                        p { +"This is a sample Ktor application with HTML and CSS." }
+                    }
+                }
+            }
+            get("/styles.css") {
+                call.respondCss {
+                    body {
+                        backgroundColor = Color.darkBlue
+                        margin = Margin(0.px)
+                    }
+                    rule("h1") {
+                        color = Color.white
+                    }
+                }
             }
         }
     }

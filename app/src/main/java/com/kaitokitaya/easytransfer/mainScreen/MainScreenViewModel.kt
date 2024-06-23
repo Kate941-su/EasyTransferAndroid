@@ -37,9 +37,10 @@ class MainScreenViewModel(
     fun getDirectoryItem():List<File>? {
         val root = Environment.getExternalStorageDirectory().absolutePath
         val directory = File(root)
-        val directories = directory.listFiles( FileFilter {
-            it.isDirectory
-        })?.toList()
+//        val directories = directory.listFiles( FileFilter {
+//            it.isDirectory
+//        })?.toList()
+        val directories = directory.listFiles().toList()
         return directories
     }
 }
