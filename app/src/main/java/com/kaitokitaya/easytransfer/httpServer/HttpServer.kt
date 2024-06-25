@@ -29,6 +29,7 @@ import kotlinx.css.color
 import kotlinx.css.left
 import kotlinx.css.margin
 import kotlinx.css.px
+import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.head
 import kotlinx.html.h1
@@ -133,6 +134,7 @@ object HttpServer {
                     body {
                         h1 { +"Hello, World!" }
                         p { +"This is a sample Ktor application with HTML and CSS." }
+                        a ("https://www.google.co.jp/"){ +"Go to google" }
                     }
                 }
             }
