@@ -1,5 +1,6 @@
 package com.kaitokitaya.easytransfer.httpServer
 
+import android.os.Environment
 import com.kaitokitaya.easytransfer.fileHandler.FileHandler
 import com.kaitokitaya.easytransfer.util.Util
 import io.ktor.events.EventDefinition
@@ -17,7 +18,6 @@ import io.ktor.server.request.uri
 import io.ktor.server.response.respondText
 import io.ktor.server.response.responseType
 import io.ktor.server.routing.routing
-import io.ktor.server.util.getValue
 import kotlinx.css.Border
 import kotlinx.css.BorderCollapse
 import kotlinx.css.BorderStyle
@@ -31,6 +31,7 @@ import kotlinx.css.Overflow
 import kotlinx.css.Padding
 import kotlinx.css.TableLayout
 import kotlinx.css.TextAlign
+import kotlinx.css.a
 import kotlinx.css.background
 import kotlinx.css.backgroundColor
 import kotlinx.css.body
@@ -45,11 +46,11 @@ import kotlinx.css.outline
 import kotlinx.css.overflow
 import kotlinx.css.padding
 import kotlinx.css.px
-import kotlinx.css.script
 import kotlinx.css.tableLayout
 import kotlinx.css.textAlign
 import kotlinx.css.width
 import kotlinx.html.ButtonType
+import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.button
 import kotlinx.html.caption
@@ -71,6 +72,7 @@ import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import timber.log.Timber
 import java.nio.file.Files
+import kotlin.math.abs
 
 sealed class ServerStatus {
     data object Active : ServerStatus()
@@ -84,9 +86,6 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
         const val PORT = 8080
     }
 
-    init {
-        val test = FileHandler.getAllList("/")
-    }
 
     private var server: NettyApplicationEngine? = null
     private val TAG = "HttpServer"
@@ -96,8 +95,26 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     private val logger by lazy { LoggerFactory.getLogger("ApplicationLogger") }
     private val requestLogs = mutableListOf<String>()
     private val responseLogs = mutableListOf<String>()
+    private val rootPath = Environment.getExternalStorageDirectory().absolutePath
+    private val absPathList = mutableListOf<String>()
 
-    var currentDirectory = "/"
+    init {
+        absPathList.add(rootPath)
+        getAllDirectoryPath(Environment.getExternalStorageDirectory().absolutePath)
+        Timber.tag(TAG).d(absPathList.toString())
+    }
+
+    private fun getAllDirectoryPath(path: String) {
+        val fileList = FileHandler.getAllFilesFromAbsPath(path)
+        fileList?.forEach {
+            if (it.isDirectory) {
+                val absPath = it.absolutePath
+                absPathList.add(absPath)
+                getAllDirectoryPath(absPath)
+            }
+        }
+    }
+
 
     fun start(): ServerStatus {
         try {
@@ -168,70 +185,71 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
         this.respondText(CssBuilder().apply(builder).toString(), ContentType.Text.CSS)
     }
 
+    private fun getRelativePath(absPath: String): String {
+        val tempAbsPath = absPath.replace(Regex("/storage/emulated/0"), "")
+        return tempAbsPath.replace(Regex("/storage/emulated/0/"), "")
+    }
+
     private fun Application.routingModule() {
         routing {
-            get(currentDirectory) {
-                call.respondHtml(HttpStatusCode.OK) {
-                    val nextDirectory = call.request.queryParameters[queryKey]
-                    nextDirectory?.let {
-                        currentDirectory = "$currentDirectory/$it"
-                    }
-                    val fileList = FileHandler.getAllList(currentDirectory)
-                    head {
-                        link(rel = "stylesheet", href = "/styles.css", type = "text/css")
-                        script {
-                            unsafe {
-                                raw(
-                                    """
+            absPathList.forEach { absPath ->
+                val relativePath = getRelativePath(absPath = absPath)
+                get(relativePath) {
+                    call.respondHtml(HttpStatusCode.OK) {
+                        val fileList = FileHandler.getAllFilesFromAbsPath(absPath)
+                        head {
+                            link(rel = "stylesheet", href = "/styles.css", type = "text/css")
+                            script {
+                                unsafe {
+                                    raw(
+                                        """
                                     function onButtonClick() {
                                         const buttonText = document.getElementById("directoryButton").textContent;
                                         fetch(`/?buttonText=${"$"}{encodeURIComponent(buttonText)}`)
                                     }
                                 """
-                                )
+                                    )
+                                }
                             }
                         }
-                    }
-                    body {
-                        div(classes = "table_component") {
-                            table {
-                                caption {
-                                    h1 { +currentDirectory }
-                                }
-                                thead {
-                                    tr {
-                                        th { +"Name" }
-                                        th { +"Last modified" }
-                                        th { +"Size" }
-                                    }
-
-                                }
-                                tbody {
-                                    fileList?.forEach {
+                        body {
+                            div(classes = "table_component") {
+                                h1 {if (relativePath == "") +"/" else +relativePath }
+                                table {
+                                    thead {
                                         tr {
-                                            td {
-                                                if (it.isDirectory) {
-                                                    button(
-                                                        classes = "clear-decoration",
-                                                        type = ButtonType.button,
-                                                    ) {
-                                                        id = "directoryButton"
-                                                        onClick = "onButtonClick()"
+                                            th { +"Name" }
+                                            th { +"Last modified" }
+                                            th { +"Size" }
+                                        }
+
+                                    }
+                                    tbody {
+                                        fileList?.forEach {
+                                            tr {
+                                                td {
+                                                    if (it.isDirectory) {
+                                                        a(
+                                                            href = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${getRelativePath(it.absolutePath)}",
+                                                            classes = "directory"
+                                                        ) {
+                                                            +it.name
+                                                        }
+                                                    } else {
                                                         +it.name
                                                     }
-                                                } else {
-                                                    +it.name
                                                 }
-                                            }
 
-                                            td {
-                                                +Util.getDataTime(epoch = it.lastModified())
-                                            }
-                                            td {
-                                                if (it.isDirectory) {
-                                                    +"-"
-                                                } else {
-                                                    +Files.size(it.toPath()).toString()
+                                                td {
+                                                    +Util.getDataTime(epoch = it.lastModified())
+                                                }
+                                                td {
+                                                    if (it.isDirectory) {
+                                                        +"-"
+                                                    } else {
+                                                        val fileSize = Files.size(it.toPath()).toDouble() / 1000000
+                                                        +"${fileSize}MB"
+                                                    }
                                                 }
                                             }
                                         }
@@ -253,6 +271,9 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                     }
                     rule(".file") {
                         color = Color.black
+                    }
+                    rule(".directory") {
+                        color = Color.blue
                     }
 
                     rule(".clear-decoration") {

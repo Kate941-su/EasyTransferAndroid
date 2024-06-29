@@ -14,6 +14,11 @@ object FileHandler {
         return directory.listFiles()?.toList()
     }
 
+    fun getAllFilesFromAbsPath(absPath: String): List<File>? {
+        val files = File(absPath)
+        return files.listFiles()?.toList()
+    }
+
 
 
 }
