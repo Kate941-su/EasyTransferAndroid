@@ -15,6 +15,8 @@ import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.uri
+import io.ktor.server.response.header
+import io.ktor.server.response.respondFile
 import io.ktor.server.response.respondText
 import io.ktor.server.response.responseType
 import io.ktor.server.routing.routing
@@ -79,6 +81,7 @@ import kotlinx.html.unsafe
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import timber.log.Timber
+import java.io.File
 import java.nio.file.Files
 import kotlin.math.abs
 
@@ -97,28 +100,30 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
 
     private var server: NettyApplicationEngine? = null
     private val TAG = "HttpServer"
-    private val queryKey = "buttonText"
+    private val queryKeyDownload = "download"
 
 
     private val logger by lazy { LoggerFactory.getLogger("ApplicationLogger") }
-    private val requestLogs = mutableListOf<String>()
     private val responseLogs = mutableListOf<String>()
     private val rootPath = Environment.getExternalStorageDirectory().absolutePath
-    private val absPathList = mutableListOf<String>()
+    private val absDirPathList = mutableListOf<String>()
+    private val absFilePathList = mutableListOf<String>()
 
     init {
-        absPathList.add(rootPath)
+        absDirPathList.add(rootPath)
         getAllDirectoryPath(Environment.getExternalStorageDirectory().absolutePath)
-        Timber.tag(TAG).d(absPathList.toString())
+        Timber.tag(TAG).d(absDirPathList.toString())
     }
 
     private fun getAllDirectoryPath(path: String) {
         val fileList = FileHandler.getAllFilesFromAbsPath(path)
         fileList?.forEach {
+            val absPath = it.absolutePath
             if (it.isDirectory) {
-                val absPath = it.absolutePath
-                absPathList.add(absPath)
+                absDirPathList.add(absPath)
                 getAllDirectoryPath(absPath)
+            } else {
+                absFilePathList.add(absPath)
             }
         }
     }
@@ -200,21 +205,36 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
 
     private fun Application.routingModule() {
         routing {
-            absPathList.forEach { absPath ->
+            absFilePathList.forEach { absFilePath ->
+                val relativePath = getRelativePath(absPath = absFilePath)
+                get(relativePath) {
+                    val file = File(absFilePath)
+                    if (file.exists()) {
+                        call.response.header(HttpHeaders.ContentDisposition, "attachment")
+                        call.respondFile(file)
+                    }
+                }
+
+            }
+            absDirPathList.forEach { absPath ->
                 val relativePath = getRelativePath(absPath = absPath)
                 get(relativePath) {
                     call.respondHtml(HttpStatusCode.OK) {
                         val fileList = FileHandler.getAllFilesFromAbsPath(absPath)
+                        val filePath = call.request.queryParameters[queryKeyDownload]
                         head {
                             link(rel = "stylesheet", href = "/styles.css", type = "text/css")
-                            link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css")
+                            link(
+                                rel = "stylesheet",
+                                href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+                            )
                             script {
                                 unsafe {
                                     raw(
                                         """
-                                    function onDownloadClick() {
-                                        const buttonText = document.getElementById("directoryButton").textContent;
-                                        fetch(`/?buttonText=${"$"}{encodeURIComponent(buttonText)}`)
+                                    function onDownloadClick(path) {
+                                        console.log(path)
+                                        fetch(`/?download=${"$"}{encodeURIComponent(path)}`)
                                     }
                                 """
                                     )
@@ -223,14 +243,13 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                         }
                         body {
                             div(classes = "table_component") {
-                                h1 {if (relativePath == "") +"/" else +relativePath }
+                                h1 { if (relativePath == "") +"/" else +relativePath }
                                 table {
                                     thead {
                                         tr {
                                             th { +"Name" }
                                             th { +"Last modified" }
                                             th { +"Size" }
-                                            th { +"" }
                                             th { +"" }
                                         }
 
@@ -241,7 +260,11 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                                 td {
                                                     if (it.isDirectory) {
                                                         a(
-                                                            href = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${getRelativePath(it.absolutePath)}",
+                                                            href = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                                                getRelativePath(
+                                                                    it.absolutePath
+                                                                )
+                                                            }",
                                                             classes = "directory"
                                                         ) {
                                                             +it.name
@@ -264,15 +287,14 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                                 }
                                                 td {
                                                     if (it.isFile) {
-                                                        button(classes = "icon_button") {
-                                                            i(classes = "fa-solid fa-file-arrow-down")
-                                                        }
-                                                    }
-                                                }
-                                                td {
-                                                    if (it.isFile) {
-                                                        button(classes = "icon_button") {
-                                                            i(classes = "fa-solid fa-trash")
+                                                        a(
+                                                            href = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                                                getRelativePath(
+                                                                    it.absolutePath
+                                                                )
+                                                            }",
+                                                        ) {
+                                                            i(classes = "fa-solid fa-file-arrow-down") {}
                                                         }
                                                     }
                                                 }
