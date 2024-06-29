@@ -84,6 +84,10 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
         const val PORT = 8080
     }
 
+    init {
+        val test = FileHandler.getAllList("/")
+    }
+
     private var server: NettyApplicationEngine? = null
     private val TAG = "HttpServer"
     private val queryKey = "buttonText"
@@ -168,7 +172,10 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
         routing {
             get(currentDirectory) {
                 call.respondHtml(HttpStatusCode.OK) {
-                    val dum = call.request.queryParameters[queryKey]
+                    val nextDirectory = call.request.queryParameters[queryKey]
+                    nextDirectory?.let {
+                        currentDirectory = "$currentDirectory/$it"
+                    }
                     val fileList = FileHandler.getAllList(currentDirectory)
                     head {
                         link(rel = "stylesheet", href = "/styles.css", type = "text/css")
@@ -179,9 +186,6 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                     function onButtonClick() {
                                         const buttonText = document.getElementById("directoryButton").textContent;
                                         fetch(`/?buttonText=${"$"}{encodeURIComponent(buttonText)}`)
-                                        .then(response => response.text())
-                                        .then(data => alert(buttonText))
-                                        .catch(error => alert(buttonText));
                                     }
                                 """
                                 )
