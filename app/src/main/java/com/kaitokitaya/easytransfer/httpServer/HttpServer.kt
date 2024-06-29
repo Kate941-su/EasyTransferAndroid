@@ -1,11 +1,7 @@
 package com.kaitokitaya.easytransfer.httpServer
 
-import android.os.Environment
-import android.system.Os.link
-import androidx.compose.material3.Button
 import com.kaitokitaya.easytransfer.fileHandler.FileHandler
 import com.kaitokitaya.easytransfer.util.Util
-import io.ktor.client.statement.HttpResponse
 import io.ktor.events.EventDefinition
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -13,10 +9,6 @@ import io.ktor.server.application.hooks.ResponseSent
 import io.ktor.server.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.html.respondHtml
-import io.ktor.server.http.content.resources
-import io.ktor.server.http.content.static
-import io.ktor.server.http.content.staticFiles
-import io.ktor.server.http.content.staticResources
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.origin
@@ -25,11 +17,13 @@ import io.ktor.server.request.uri
 import io.ktor.server.response.respondText
 import io.ktor.server.response.responseType
 import io.ktor.server.routing.routing
+import io.ktor.server.util.getValue
 import kotlinx.css.Border
 import kotlinx.css.BorderCollapse
 import kotlinx.css.BorderStyle
 import kotlinx.css.Color
 import kotlinx.css.CssBuilder
+import kotlinx.css.Cursor
 import kotlinx.css.LinearDimension
 import kotlinx.css.Margin
 import kotlinx.css.Outline
@@ -44,40 +38,38 @@ import kotlinx.css.border
 import kotlinx.css.borderCollapse
 import kotlinx.css.borderSpacing
 import kotlinx.css.color
+import kotlinx.css.cursor
 import kotlinx.css.height
-import kotlinx.css.left
 import kotlinx.css.margin
 import kotlinx.css.outline
 import kotlinx.css.overflow
 import kotlinx.css.padding
 import kotlinx.css.px
-import kotlinx.css.table
+import kotlinx.css.script
 import kotlinx.css.tableLayout
 import kotlinx.css.textAlign
 import kotlinx.css.width
-import kotlinx.html.a
+import kotlinx.html.ButtonType
 import kotlinx.html.body
 import kotlinx.html.button
 import kotlinx.html.caption
 import kotlinx.html.div
 import kotlinx.html.head
 import kotlinx.html.h1
-import kotlinx.html.li
+import kotlinx.html.id
 import kotlinx.html.link
 import kotlinx.html.onClick
-import kotlinx.html.p
+import kotlinx.html.script
 import kotlinx.html.table
 import kotlinx.html.tbody
 import kotlinx.html.td
 import kotlinx.html.th
 import kotlinx.html.thead
-import kotlinx.html.title
 import kotlinx.html.tr
-import kotlinx.html.ul
+import kotlinx.html.unsafe
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import timber.log.Timber
-import java.io.File
 import java.nio.file.Files
 
 sealed class ServerStatus {
@@ -94,6 +86,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
 
     private var server: NettyApplicationEngine? = null
     private val TAG = "HttpServer"
+    private val queryKey = "buttonText"
 
 
     private val logger by lazy { LoggerFactory.getLogger("ApplicationLogger") }
@@ -172,12 +165,28 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     }
 
     private fun Application.routingModule() {
-        val fileList = FileHandler.getAllList(currentDirectory)
         routing {
             get(currentDirectory) {
                 call.respondHtml(HttpStatusCode.OK) {
+                    val dum = call.request.queryParameters[queryKey]
+                    val fileList = FileHandler.getAllList(currentDirectory)
                     head {
                         link(rel = "stylesheet", href = "/styles.css", type = "text/css")
+                        script {
+                            unsafe {
+                                raw(
+                                    """
+                                    function onButtonClick() {
+                                        const buttonText = document.getElementById("directoryButton").textContent;
+                                        fetch(`/?buttonText=${"$"}{encodeURIComponent(buttonText)}`)
+                                        .then(response => response.text())
+                                        .then(data => alert(buttonText))
+                                        .catch(error => alert(buttonText));
+                                    }
+                                """
+                                )
+                            }
+                        }
                     }
                     body {
                         div(classes = "table_component") {
@@ -198,8 +207,12 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                         tr {
                                             td {
                                                 if (it.isDirectory) {
-                                                    currentDirectory = it.absolutePath
-                                                    button(classes = ".clear-decoration") {
+                                                    button(
+                                                        classes = "clear-decoration",
+                                                        type = ButtonType.button,
+                                                    ) {
+                                                        id = "directoryButton"
+                                                        onClick = "onButtonClick()"
                                                         +it.name
                                                     }
                                                 } else {
@@ -238,11 +251,12 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                         color = Color.black
                     }
 
-                    rule(".clear-decoration button") {
+                    rule(".clear-decoration") {
                         color = Color.blue
                         border = Border.none
                         outline = Outline.none
                         background = "transparent"
+                        cursor = Cursor.pointer
                     }
 
                     // Table Style
