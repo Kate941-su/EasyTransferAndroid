@@ -15,20 +15,21 @@ import java.io.FileFilter
 
 class MainScreenViewModel(
     private val connectiveManagerWrapper: ConnectiveManagerWrapper,
+    private val httpServer: HttpServer,
     val startStorageAccessPermissionRequest: VoidCallback
 ) : ViewModel() {
     private val _ipAddressFlow = MutableStateFlow<String?>(null)
     var ipAddress: StateFlow<String?> = _ipAddressFlow.asStateFlow()
 
     fun onTapStart() {
-        HttpServer.start()
+        httpServer.start()
         _ipAddressFlow.update {
             connectiveManagerWrapper.getIPAddress()
         }
     }
 
     fun onTapStop() {
-        HttpServer.stop()
+        httpServer.stop()
         _ipAddressFlow.update {
             null
         }

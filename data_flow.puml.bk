@@ -1,0 +1,207 @@
+
+@startuml
+title EasyTransfer screen transition
+left to right direction
+
+
+frame "動画詳細" as movieDetail {
+  state "動画詳細" as movieDetailDefault #lightblue {
+  }
+  state "確認" as movieConfirm #lightblue {
+  }
+  [*] -left> movieDetailDefault
+}
+state "タイトル" as editMovieTitle #lightblue ##[bold]blue
+state "プライバシーポリシー" as shareYoutube #lightblue
+state "GoogleAPI利用ポリシー外部" as googleApiServicesUserDataPolicy #pink
+state "プライバシーポリシー外部" as privacyPolicy #pink
+state "動画編集" as editMovie #lightblue
+state "プレビュー" as moviePreview #lightblue
+state "ムービーを作成中" as movieSave #lightblue
+state "フィルタ" as movieFilter #lightblue{
+  movieFilter: この画面に来た時点で画面の保存が完了している
+}
+state "フィルタ編集画面" as filterEditing #lightblue
+state "フィルタ加工中" as movieFiltering #lightblue
+state "写真" as picture #lightblue
+state "端末から追加" as pictureFromDevice #lightblue
+state c <<choice>>
+state "どこに追加しますか?" as pictureAppendWhere #lightblue
+state "Facebook" as facebook #pink ##[bold]red{
+  facebook: ログインする経路なし
+}
+state "Instagram" as instagram #pink ##[bold]red {
+  instagram: 遷移後エラーで表示されない
+}
+state "音楽" as music #lightblue
+state "音楽集" as musicCollection #lightblue
+state "[キーワード]" as musicCollectionSearchKeyword #lightblue
+state "クレジット" as creditWebView #lightblue {
+  creditWebView: WebView
+}
+state "音楽のトリミング" as musicTrimming #lightblue
+state "曲を選択" as musicLibrary #pink
+state "動画設定" as movieConfig #lightgreen{
+  movieConfig: ボトムシート
+}
+state "全体設定" as settings #lightblue
+state "AppStore" as appstore #pink
+state "STYホームページ" as styhomepage #pink
+state "動画ビューア" as movieViewer #lightblue
+state "動画の並び替え" as videoSorting #lightblue
+state "編集" as edit #lightblue
+state "字幕" as subtitles #lightblue ##[bold]blue
+state "YouTube" as youtube #lightgreen {
+  youtube: ボトムシート
+}
+state "YouTube利用規約" as youtubeTermaOfService #pink
+
+
+'home
+home --> movieDetail: 動画選択
+home --> editMovie: 動画追加
+home --> settings: 設定
+home --> helpExternal: クエスチョン
+
+  
+  'movieDetail
+  movieDetail --> editMovieTitle: タイトル
+  movieDetail --> shareYoutube: YouTubeで共有するクエスチョン
+  movieDetail --> movieViewer :再生ボタン押下
+  movieDetail --> youtube :YouTubeで共有する押下
+  movieDetailDefault -> editMovie :編集
+  movieDetailDefault --> filterEditing :フィルタを変更
+  home <[dashed]-- movieDetail: prev, 削除
+  home <[dashed]-- movieConfirm: 削除
+
+
+    'editMovieTitle
+    movieDetail <[dashed]-- editMovieTitle: prev, ok
+
+    'youtube
+    youtube --> youtubeTermaOfService :YouTube利用規約押下
+    movieDetail <[dashed]-- youtube :キャンセル、下へスワイプ
+
+
+      'youtubeTermaOfService
+
+    'shareYoutube
+    shareYoutube --> privacyPolicy: プライバシーポリシーへ
+    shareYoutube --> googleApiServicesUserDataPolicy: GoogleApiServicesUserDataPolicyへ
+    movieDetail <[dashed]-- shareYoutube: prev
+
+
+      'privacyPolicy
+
+      'googleApiServicesUserDataPolicy
+
+    'movieViewer
+    movieDetail <[dashed]-- movieViewer :閉じる
+    
+
+    'filterEditing
+    filterEditing --> movieFiltering :任意のフィルタを選択
+    movieConfirm <[dashed]-- filterEditing :フィルタを外す押下
+    movieDetail <[dashed]-- filterEditing : prev
+      
+
+  'editMovie
+  editMovie --> music: 音楽
+  editMovie --> picture: 写真
+  editMovie --> movieConfig: 設定
+  editMovie --> moviePreview: プレビュー
+  editMovie --> movieDescriptionExternal: 詳しい使い方を見る
+  editMovie --> edit: 編集
+  home <[dashed]-- editMovie: prev
+
+    'music
+    music --> musicCollection: 音楽集から選択
+    music --> musicLibrary: ライブラリから選択
+    music --> musicTrimming: 音楽のトリミング
+    editMovie <[dashed]-- music : prev
+
+      'musicCollection
+      musicCollection --> creditWebView: クレジット
+      musicCollection --> musicCollectionSearchKeyword: キーワード選択
+      music <[dashed]-- musicCollection:  prev, 音楽選択
+
+        'creditWebView
+         musicCollection <[dashed]-- creditWebView: prev※押下できない, 閉じる
+
+        'musicCollectionSearchKeyword
+        music <[dashed]-- musicCollectionSearchKeyword: 音楽選択
+        musicCollection <[dashed]-- musicCollectionSearchKeyword: prev
+
+      'musicLibrary
+      music <[dashed]-- musicLibrary : cancel, 選択
+
+      'musicTrimming
+      music <[dashed]-- musicTrimming: prev, 削除, 保存する
+
+    'picture
+    picture --> pictureFromDevice: 端末から追加
+    picture --> facebook: Facebook
+    picture --> instagram: Instagram
+    editMovie <[dashed]-- picture: prev
+
+      'pictureFromDevice
+       pictureFromDevice -> c: 動画を取り込む
+       picture <[dashed]-- pictureFromDevice: prev
+
+         'c
+          c --> pictureAppendWhere: 動画あり
+          picture <[dashed]-- c: 動画なし
+
+            'pictureAppendWhere:
+            pictureFromDevice <[dashed]-- pictureAppendWhere: prev
+            picture <[dashed]-- pictureAppendWhere: この場所に追加
+
+      'facebook
+       picture <-[#red,dashed]- facebook: "未確認"
+
+      'instagram
+       picture <-[#red,dashed]- instagram: "未確認"
+
+    'movieConfig
+    movieConfig --> videoSorting: 動画の並び替え
+    editMovie <[dashed]-- movieConfig: prev
+
+      'videoSorting
+      movieConfig <[dashed]-- videoSorting: prev
+
+    'moviePreview
+     moviePreview --> movieSave: 保存へ進む
+     editMovie <[dashed]-- moviePreview: prev
+
+       'movieSave
+       movieSave --> movieFilter: 時間経過
+       moviePreview <[dashed]-- movieSave: prev
+
+         'movieFilter
+         movieFilter --> movieFiltering: 選択
+         movieConfirm <[dashed]-- movieFilter: ムービーの保存と共有へ進む
+         movieSave <[dashed]-- movieFilter: prev
+         
+
+         'movieFiltering
+         movieConfirm <[dashed]-- movieFiltering: 時間経過
+         movieFilter <[dashed]-- movieFiltering: prev
+
+    'movieDescriptionExternal
+
+    'edit'
+    edit --> subtitles: 字幕
+    editMovie <[dashed]-- edit: prev,削除
+
+      'subtitles'
+      edit <[dashed]-- subtitles: prev,OK
+
+  'settings
+  settings-->helpExternal: ヘルプページ
+  settings-->styhomepage: 開発会社
+  settings-->appstore: アプリをレビューする
+  home <[dashed]-- settings: prev
+
+  'helpExternal
+@enduml
+

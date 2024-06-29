@@ -1,0 +1,35 @@
+
+@startuml
+title EasyTransfer screen transition
+left to right direction
+
+' With frame
+' frame "Sample1" as sample {
+'   state "sample1" as sample1 #lightblue {
+'   }
+'   state "sample2" as sample2 #lightblue {
+'   }
+'   [*] -left> movieDetailDefault
+' }
+
+' Color, With description
+' state "Facebook" as facebook #pink ##[bold]red{
+'   facebook: description
+' }
+
+' Arrow
+' settings-->appstore: aaaa
+' home <[dashed]-- settings: prev
+
+
+state "Home Screen" as home #lightblue
+
+state c <<choice>>
+
+
+
+'home
+home --> a: a
+
+@enduml
+

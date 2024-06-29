@@ -70,6 +70,10 @@ dependencies {
     implementation(libs.ktor.server.html.builder)
     implementation("org.jetbrains.kotlin-wrappers:kotlin-css:1.0.0-pre.760")
 
+    // HTTP Client
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+
     // Log module
     implementation(libs.slf4j.api)
     implementation(libs.logback.classic.v135)

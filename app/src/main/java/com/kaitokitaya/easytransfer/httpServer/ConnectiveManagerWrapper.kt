@@ -17,7 +17,7 @@ sealed class NetworkStatus {
     data object MobileTelephony : NetworkStatus()
 }
 
-
+// TODO: Use hilt
 class ConnectiveManagerWrapper(private val context: Context) {
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
