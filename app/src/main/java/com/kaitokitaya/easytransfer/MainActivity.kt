@@ -2,11 +2,13 @@ package com.kaitokitaya.easytransfer
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,36 +29,43 @@ class MainActivity : ComponentActivity() {
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-
-        } else {
-
-        }
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        // TODO: If permmision is no granted explain why it doesn't work.
     }
 
     // TODO: If permission is not granted, transfer setting screen to get granted.
     private fun startStorageAccessPermissionRequest() {
-        val readExternalStoragePermission = ContextCompat.checkSelfPermission(
+        val storagePermission = ContextCompat.checkSelfPermission(
             this, Manifest.permission.READ_EXTERNAL_STORAGE
         )
-
-        val writeExternalStoragePermission = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-        )
-
-        if (readExternalStoragePermission != PackageManager.PERMISSION_GRANTED) {
-            requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+        if (storagePermission != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                )
+            )
         } else {
             Timber.tag(TAG).d("${Manifest.permission.READ_EXTERNAL_STORAGE} is granted")
         }
+    }
 
-        if (writeExternalStoragePermission != PackageManager.PERMISSION_GRANTED) {
-            requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun startStorageAccessPermissionRequestLaterModel() {
+        val storagePermission = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.READ_EXTERNAL_STORAGE
+        )
+        if (storagePermission != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_AUDIO,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                )
+            )
         } else {
-            Timber.tag(TAG).d("${Manifest.permission.WRITE_EXTERNAL_STORAGE} is granted")
+            Timber.tag(TAG).d("${Manifest.permission.READ_EXTERNAL_STORAGE} is granted")
         }
     }
 
@@ -72,7 +81,7 @@ class MainActivity : ComponentActivity() {
             val mainScreenViewModel = MainScreenViewModel(
                 connectiveManagerWrapper = connectiveManagerWrapper,
                 httpServer = httpServer,
-                startStorageAccessPermissionRequest = { startStorageAccessPermissionRequest() }
+                startStorageAccessPermissionRequest = {}
             )
             EasyTransferTheme {
                 // TODO: In product version, I have to change from Main to Splash
@@ -97,6 +106,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
+    override fun onStart() {
+        super.onStart()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            startStorageAccessPermissionRequest()
+        } else {
+            startStorageAccessPermissionRequestLaterModel()
+        }
+    }
 }
 

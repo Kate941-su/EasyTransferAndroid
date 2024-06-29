@@ -221,7 +221,6 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                 get(relativePath) {
                     call.respondHtml(HttpStatusCode.OK) {
                         val fileList = FileHandler.getAllFilesFromAbsPath(absPath)
-                        val filePath = call.request.queryParameters[queryKeyDownload]
                         head {
                             link(rel = "stylesheet", href = "/styles.css", type = "text/css")
                             link(
