@@ -255,6 +255,20 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
 
                                     }
                                     tbody {
+
+                                        tr {
+                                            td {
+                                                a(
+                                                    href = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                                        FileHandler.getParentPath(
+                                                            relativePath
+                                                        )
+                                                    } "
+                                                ) {
+                                                    +"Parent directory"
+                                                }
+                                            }
+                                        }
                                         fileList?.forEach {
                                             tr {
                                                 td {

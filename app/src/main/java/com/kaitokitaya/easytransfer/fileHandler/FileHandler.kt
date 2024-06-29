@@ -19,6 +19,10 @@ object FileHandler {
         return files.listFiles()?.toList()
     }
 
+    fun getParentPath(path: String): String {
+        return path.substringBeforeLast("/")
+    }
+
 
 
 }
