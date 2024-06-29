@@ -18,12 +18,14 @@ import io.ktor.server.request.uri
 import io.ktor.server.response.respondText
 import io.ktor.server.response.responseType
 import io.ktor.server.routing.routing
+import kotlinx.css.Align
 import kotlinx.css.Border
 import kotlinx.css.BorderCollapse
 import kotlinx.css.BorderStyle
 import kotlinx.css.Color
 import kotlinx.css.CssBuilder
 import kotlinx.css.Cursor
+import kotlinx.css.Display
 import kotlinx.css.LinearDimension
 import kotlinx.css.Margin
 import kotlinx.css.Outline
@@ -32,16 +34,21 @@ import kotlinx.css.Padding
 import kotlinx.css.TableLayout
 import kotlinx.css.TextAlign
 import kotlinx.css.a
+import kotlinx.css.alignItems
 import kotlinx.css.background
 import kotlinx.css.backgroundColor
 import kotlinx.css.body
 import kotlinx.css.border
 import kotlinx.css.borderCollapse
+import kotlinx.css.borderRadius
 import kotlinx.css.borderSpacing
 import kotlinx.css.color
 import kotlinx.css.cursor
+import kotlinx.css.display
+import kotlinx.css.fontSize
 import kotlinx.css.height
 import kotlinx.css.margin
+import kotlinx.css.marginRight
 import kotlinx.css.outline
 import kotlinx.css.overflow
 import kotlinx.css.padding
@@ -57,6 +64,7 @@ import kotlinx.html.caption
 import kotlinx.html.div
 import kotlinx.html.head
 import kotlinx.html.h1
+import kotlinx.html.i
 import kotlinx.html.id
 import kotlinx.html.link
 import kotlinx.html.onClick
@@ -199,11 +207,12 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                         val fileList = FileHandler.getAllFilesFromAbsPath(absPath)
                         head {
                             link(rel = "stylesheet", href = "/styles.css", type = "text/css")
+                            link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css")
                             script {
                                 unsafe {
                                     raw(
                                         """
-                                    function onButtonClick() {
+                                    function onDownloadClick() {
                                         const buttonText = document.getElementById("directoryButton").textContent;
                                         fetch(`/?buttonText=${"$"}{encodeURIComponent(buttonText)}`)
                                     }
@@ -221,6 +230,8 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                             th { +"Name" }
                                             th { +"Last modified" }
                                             th { +"Size" }
+                                            th { +"" }
+                                            th { +"" }
                                         }
 
                                     }
@@ -251,6 +262,20 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                                         +"${fileSize}MB"
                                                     }
                                                 }
+                                                td {
+                                                    if (it.isFile) {
+                                                        button(classes = "icon_button") {
+                                                            i(classes = "fa-solid fa-file-arrow-down")
+                                                        }
+                                                    }
+                                                }
+                                                td {
+                                                    if (it.isFile) {
+                                                        button(classes = "icon_button") {
+                                                            i(classes = "fa-solid fa-trash")
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -267,7 +292,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                         margin = Margin(10.px)
                     }
                     rule("h1") {
-                        color = Color.blue
+                        color = Color.black
                     }
                     rule(".file") {
                         color = Color.black
@@ -316,6 +341,21 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                         padding = Padding(LinearDimension("5px"))
                     }
 
+                    rule(".icon_button") {
+                        display = Display.inlineFlex
+                        alignItems = Align.center
+                        padding = Padding(vertical = LinearDimension("10px"), horizontal = LinearDimension("20px"))
+                        fontSize = LinearDimension("18px")
+                        color = Color.blue
+                        border = Border.none
+                        outline = Outline.none
+                        background = "transparent"
+                        cursor = Cursor.pointer
+                    }
+
+                    rule(".icon-button i") {
+                        marginRight = LinearDimension("8px")
+                    }
                 }
             }
         }
