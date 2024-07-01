@@ -59,15 +59,19 @@ import kotlinx.css.tableLayout
 import kotlinx.css.textAlign
 import kotlinx.css.width
 import kotlinx.html.ButtonType
+import kotlinx.html.FormMethod
+import kotlinx.html.InputType
 import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.button
 import kotlinx.html.caption
 import kotlinx.html.div
+import kotlinx.html.form
 import kotlinx.html.head
 import kotlinx.html.h1
 import kotlinx.html.i
 import kotlinx.html.id
+import kotlinx.html.input
 import kotlinx.html.link
 import kotlinx.html.onClick
 import kotlinx.html.script
@@ -207,6 +211,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
         routing {
             absFilePathList.forEach { absFilePath ->
                 val relativePath = getRelativePath(absPath = absFilePath)
+                // For downloading files
                 get(relativePath) {
                     val file = File(absFilePath)
                     if (file.exists()) {
@@ -214,11 +219,19 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                         call.respondFile(file)
                     }
                 }
-
             }
+
+
             absDirPathList.forEach { absPath ->
                 val relativePath = getRelativePath(absPath = absPath)
+                // For uploading files
+                post("$relativePath" + "upload") {
+                    val request = call.request
+                }
+
+                // For showing directory
                 get(relativePath) {
+                    Timber.tag(TAG).d("Path is: " + "$relativePath" + "upload")
                     call.respondHtml(HttpStatusCode.OK) {
                         val fileList = FileHandler.getAllFilesFromAbsPath(absPath)
                         head {
@@ -309,6 +322,23 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                                         ) {
                                                             i(classes = "fa-solid fa-file-arrow-down") {}
                                                         }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        tr {
+                                            td {
+                                                form(
+                                                    method = FormMethod.post,
+                                                    action = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                                        getRelativePath(
+                                                            absPath = absPath
+                                                        )
+                                                    }upload",
+                                                ) {
+                                                    input(type = InputType.file, classes = "clear-decoration") {}
+                                                    input(type = InputType.submit, classes = "clear-decoration", ) {
+                                                        value = "Upload"
                                                     }
                                                 }
                                             }
