@@ -5,6 +5,9 @@ import com.kaitokitaya.easytransfer.fileHandler.FileHandler
 import com.kaitokitaya.easytransfer.util.Util
 import io.ktor.events.EventDefinition
 import io.ktor.http.*
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
+import io.ktor.http.content.streamProvider
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.ResponseSent
 import io.ktor.server.routing.*
@@ -14,12 +17,16 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.httpMethod
+import io.ktor.server.request.receiveMultipart
+import io.ktor.server.request.receiveParameters
 import io.ktor.server.request.uri
 import io.ktor.server.response.header
 import io.ktor.server.response.respondFile
+import io.ktor.server.response.respondRedirect
 import io.ktor.server.response.respondText
 import io.ktor.server.response.responseType
 import io.ktor.server.routing.routing
+import io.netty.handler.codec.DefaultHeaders
 import kotlinx.css.Align
 import kotlinx.css.Border
 import kotlinx.css.BorderCollapse
@@ -59,6 +66,7 @@ import kotlinx.css.tableLayout
 import kotlinx.css.textAlign
 import kotlinx.css.width
 import kotlinx.html.ButtonType
+import kotlinx.html.FormEncType
 import kotlinx.html.FormMethod
 import kotlinx.html.InputType
 import kotlinx.html.a
@@ -88,6 +96,7 @@ import timber.log.Timber
 import java.io.File
 import java.nio.file.Files
 import kotlin.math.abs
+
 
 sealed class ServerStatus {
     data object Active : ServerStatus()
@@ -208,6 +217,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     }
 
     private fun Application.routingModule() {
+
         routing {
             absFilePathList.forEach { absFilePath ->
                 val relativePath = getRelativePath(absPath = absFilePath)
@@ -225,13 +235,37 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
             absDirPathList.forEach { absPath ->
                 val relativePath = getRelativePath(absPath = absPath)
                 // For uploading files
-                post("$relativePath" + "upload") {
-                    val request = call.request
+                post("$relativePath/upload") {
+                    val request = call.receiveMultipart()
+                    request.forEachPart {
+                        when (it) {
+                            is PartData.FileItem -> {
+                                val fileBytes = it.streamProvider().readBytes()
+                                val fileName = it.originalFileName ?: "uploaded_file"
+                                val file = File(absPath, fileName)
+                                file.outputStream().use { output ->
+                                    output.write(fileBytes)
+                                }
+                            }
+
+                            else -> {
+                                // TODO: exception handling
+                            }
+                        }
+                        it.dispose()
+                    }
+                    call.respondRedirect(
+                        "http://${connectiveManagerWrapper.getIPAddress()}:8080/${getRelativePath(absPath = absPath)}"
+                    )
                 }
 
                 // For showing directory
                 get(relativePath) {
-                    Timber.tag(TAG).d("Path is: " + "$relativePath" + "upload")
+                    Timber.tag(TAG).d("Upload Path => http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                        getRelativePath(
+                            absPath = absPath
+                        )
+                    }/upload")
                     call.respondHtml(HttpStatusCode.OK) {
                         val fileList = FileHandler.getAllFilesFromAbsPath(absPath)
                         head {
@@ -330,11 +364,12 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                             td {
                                                 form(
                                                     method = FormMethod.post,
+                                                    encType = FormEncType.multipartFormData,
                                                     action = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
                                                         getRelativePath(
                                                             absPath = absPath
                                                         )
-                                                    }upload",
+                                                    }/upload",
                                                 ) {
                                                     input(type = InputType.file, classes = "clear-decoration") {}
                                                     input(type = InputType.submit, classes = "clear-decoration", ) {
