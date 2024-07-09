@@ -55,6 +55,7 @@ import kotlinx.css.color
 import kotlinx.css.cursor
 import kotlinx.css.display
 import kotlinx.css.fontSize
+import kotlinx.css.h3
 import kotlinx.css.height
 import kotlinx.css.margin
 import kotlinx.css.marginRight
@@ -77,6 +78,7 @@ import kotlinx.html.div
 import kotlinx.html.form
 import kotlinx.html.head
 import kotlinx.html.h1
+import kotlinx.html.h3
 import kotlinx.html.i
 import kotlinx.html.id
 import kotlinx.html.input
@@ -121,6 +123,9 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     private val rootPath = Environment.getExternalStorageDirectory().absolutePath
     private val absDirPathList = mutableListOf<String>()
     private val absFilePathList = mutableListOf<String>()
+
+    private var invalidFileName: String? = null
+    private var isFileEmpty = false
 
     init {
         absDirPathList.add(rootPath)
@@ -242,6 +247,15 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                         when (it) {
                             is PartData.FileItem -> {
                                 val fileBytes = it.streamProvider().readBytes()
+                                if (fileBytes.isEmpty()) {
+                                    isFileEmpty = true
+                                    call.respondRedirect(
+                                        "http://${connectiveManagerWrapper.getIPAddress()}:8080/${getRelativePath(absPath = absPath)}"
+                                    )
+                                    return@forEachPart
+                                } else {
+                                    isFileEmpty = false
+                                }
                                 val fileName = it.originalFileName ?: "uploaded_file"
                                 val file = File(absPath, fileName)
                                 try {
@@ -249,9 +263,14 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                         output.write(fileBytes)
                                     }
                                     absFilePathList.add(absPath)
+                                    invalidFileName = null
                                 } catch (e: Throwable) {
                                     assert(false) {
                                         Timber.tag(TAG).d("Could not download file data to storage.")
+                                        invalidFileName = fileName
+                                        call.respondRedirect(
+                                            "http://${connectiveManagerWrapper.getIPAddress()}:8080/${getRelativePath(absPath = absPath)}"
+                                        )
                                     }
                                 }
                             }
@@ -293,6 +312,12 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                         body {
                             div(classes = "table_component") {
                                 h1 { if (relativePath == "") +"/" else +relativePath }
+                                invalidFileName?.let {
+                                    h3(classes = "red_string") {+"$it is invalid file format."}
+                                }
+                                if (isFileEmpty) {
+                                    h3(classes = "red_string") {+"File is empty."}
+                                }
                                 table {
                                     thead {
                                         tr {
@@ -462,6 +487,9 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
 
                     rule(".icon-button i") {
                         marginRight = LinearDimension("8px")
+                    }
+                    rule(".red_string") {
+                        color = Color.red
                     }
                 }
             }
