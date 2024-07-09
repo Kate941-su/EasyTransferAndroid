@@ -217,7 +217,6 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     }
 
     private fun Application.routingModule() {
-
         routing {
             absFilePathList.forEach { absFilePath ->
                 val relativePath = getRelativePath(absPath = absFilePath)
@@ -236,6 +235,8 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                 val relativePath = getRelativePath(absPath = absPath)
                 // For uploading files
                 post("$relativePath/upload") {
+                    Timber.tag(TAG)
+                        .d("Upload Path => http://${connectiveManagerWrapper.getIPAddress()}:8080/$relativePath/upload")
                     val request = call.receiveMultipart()
                     request.forEachPart {
                         when (it) {
@@ -243,13 +244,20 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                 val fileBytes = it.streamProvider().readBytes()
                                 val fileName = it.originalFileName ?: "uploaded_file"
                                 val file = File(absPath, fileName)
-                                file.outputStream().use { output ->
-                                    output.write(fileBytes)
+                                try {
+                                    file.outputStream().use { output ->
+                                        output.write(fileBytes)
+                                    }
+                                    absFilePathList.add(absPath)
+                                } catch (e: Throwable) {
+                                    assert(false) {
+                                        Timber.tag(TAG).d("Could not download file data to storage.")
+                                    }
                                 }
                             }
 
                             else -> {
-                                // TODO: exception handling
+                                Timber.tag(TAG).d("NO ITEMS")
                             }
                         }
                         it.dispose()
@@ -261,11 +269,6 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
 
                 // For showing directory
                 get(relativePath) {
-                    Timber.tag(TAG).d("Upload Path => http://${connectiveManagerWrapper.getIPAddress()}:8080/${
-                        getRelativePath(
-                            absPath = absPath
-                        )
-                    }/upload")
                     call.respondHtml(HttpStatusCode.OK) {
                         val fileList = FileHandler.getAllFilesFromAbsPath(absPath)
                         head {
@@ -371,8 +374,12 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                                         )
                                                     }/upload",
                                                 ) {
-                                                    input(type = InputType.file, classes = "clear-decoration") {}
-                                                    input(type = InputType.submit, classes = "clear-decoration", ) {
+                                                    input(
+                                                        type = InputType.file,
+                                                        name = "file",
+                                                        classes = "clear-decoration"
+                                                    ) {}
+                                                    input(type = InputType.submit, classes = "clear-decoration") {
                                                         value = "Upload"
                                                     }
                                                 }
