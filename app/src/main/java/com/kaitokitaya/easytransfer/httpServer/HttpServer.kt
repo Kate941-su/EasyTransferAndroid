@@ -2,6 +2,7 @@ package com.kaitokitaya.easytransfer.httpServer
 
 import android.os.Environment
 import com.kaitokitaya.easytransfer.fileHandler.FileHandler
+import com.kaitokitaya.easytransfer.mainScreen.model.ServerStatus
 import com.kaitokitaya.easytransfer.util.Util
 import io.ktor.events.EventDefinition
 import io.ktor.http.*
@@ -27,6 +28,8 @@ import io.ktor.server.response.respondText
 import io.ktor.server.response.responseType
 import io.ktor.server.routing.routing
 import io.netty.handler.codec.DefaultHeaders
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.css.Align
 import kotlinx.css.Border
 import kotlinx.css.BorderCollapse
@@ -97,13 +100,6 @@ import org.slf4j.event.Level
 import timber.log.Timber
 import java.io.File
 import java.nio.file.Files
-import kotlin.math.abs
-
-
-sealed class ServerStatus {
-    data object Active : ServerStatus()
-    data object Inactive : ServerStatus()
-}
 
 // TODO: Use hilt
 class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper, private val httpClient: HttpClient) {
@@ -126,6 +122,9 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
 
     private var invalidFileName: String? = null
     private var isFileEmpty = false
+
+    private val _serverStatusFlow = MutableStateFlow<ServerStatus>(ServerStatus.Standby)
+    val serverStatus: MutableStateFlow<ServerStatus> get() = _serverStatusFlow
 
     init {
         absDirPathList.add(rootPath)
@@ -156,21 +155,21 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
             }
             server?.start(wait = false)
             Timber.tag(TAG).d("Ktor server started on port $PORT")
-            return ServerStatus.Active
+            return ServerStatus.Working
         } catch (e: Throwable) {
             // TODO: If needed I have to implement proper error handling.
             Timber.tag(TAG).d("Failed to start server instance cause of '$e'")
-            return ServerStatus.Inactive
+            return ServerStatus.Standby
         }
     }
 
     fun stop(): ServerStatus {
         try {
             server?.stop(1000, 10000)
-            return ServerStatus.Inactive
+            return ServerStatus.Standby
         } catch (e: Throwable) {
             Timber.tag(TAG).d("Failed to stop server instance cause of '$e'")
-            return ServerStatus.Active
+            return ServerStatus.Working
         }
     }
 
@@ -250,7 +249,11 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                 if (fileBytes.isEmpty()) {
                                     isFileEmpty = true
                                     call.respondRedirect(
-                                        "http://${connectiveManagerWrapper.getIPAddress()}:8080/${getRelativePath(absPath = absPath)}"
+                                        "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                            getRelativePath(
+                                                absPath = absPath
+                                            )
+                                        }"
                                     )
                                     return@forEachPart
                                 } else {
@@ -269,7 +272,11 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                         Timber.tag(TAG).d("Could not download file data to storage.")
                                         invalidFileName = fileName
                                         call.respondRedirect(
-                                            "http://${connectiveManagerWrapper.getIPAddress()}:8080/${getRelativePath(absPath = absPath)}"
+                                            "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                                getRelativePath(
+                                                    absPath = absPath
+                                                )
+                                            }"
                                         )
                                     }
                                 }
@@ -313,10 +320,10 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                             div(classes = "table_component") {
                                 h1 { if (relativePath == "") +"/" else +relativePath }
                                 invalidFileName?.let {
-                                    h3(classes = "red_string") {+"$it is invalid file format."}
+                                    h3(classes = "red_string") { +"$it is invalid file format." }
                                 }
                                 if (isFileEmpty) {
-                                    h3(classes = "red_string") {+"File is empty."}
+                                    h3(classes = "red_string") { +"File is empty." }
                                 }
                                 table {
                                     thead {
