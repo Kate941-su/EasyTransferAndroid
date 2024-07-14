@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.kaitokitaya.easytransfer.howToUseScreen.HowToUseScreen
 import com.kaitokitaya.easytransfer.httpServer.ConnectiveManagerWrapper
 import com.kaitokitaya.easytransfer.httpServer.HttpClient
 import com.kaitokitaya.easytransfer.httpServer.HttpServer
@@ -85,20 +86,20 @@ class MainActivity : ComponentActivity() {
             )
             EasyTransferTheme {
                 // TODO: In product version, I have to change from Main to Splash
-                NavHost(navController = navController, startDestination = AppRouter.Main.PATH) {
-                    composable(AppRouter.Splash.PATH) {
+                NavHost(navController = navController, startDestination = AppRouter.HowToUseRouter.path) {
+                    composable(AppRouter.Splash.path) {
                         MainScreen(
                             viewModel = mainScreenViewModel
                         )
                     }
-                    composable(AppRouter.Main.PATH) {
+                    composable(AppRouter.Main.path) {
                         MainScreen(
                             viewModel = mainScreenViewModel
                         )
                     }
-                    composable(AppRouter.ServerDetail.PATH) {
-                        MainScreen(
-                            viewModel = mainScreenViewModel
+                    composable(AppRouter.HowToUseRouter.path) {
+                        HowToUseScreen(
+                            url = "https://kaito-kitaya.gitbook.io/worldinfo_terms_of_use"
                         )
                     }
                 }
