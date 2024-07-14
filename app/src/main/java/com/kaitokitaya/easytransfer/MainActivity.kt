@@ -17,6 +17,7 @@ import com.kaitokitaya.easytransfer.howToUseScreen.HowToUseScreen
 import com.kaitokitaya.easytransfer.httpServer.ConnectiveManagerWrapper
 import com.kaitokitaya.easytransfer.httpServer.HttpClient
 import com.kaitokitaya.easytransfer.httpServer.HttpServer
+import com.kaitokitaya.easytransfer.informationScreen.InformationScreen
 import com.kaitokitaya.easytransfer.mainScreen.MainScreen
 import com.kaitokitaya.easytransfer.mainScreen.MainScreenViewModel
 import com.kaitokitaya.easytransfer.router.AppRouter
@@ -86,21 +87,30 @@ class MainActivity : ComponentActivity() {
             )
             EasyTransferTheme {
                 // TODO: In product version, I have to change from Main to Splash
-                NavHost(navController = navController, startDestination = AppRouter.HowToUseRouter.path) {
-                    composable(AppRouter.Splash.path) {
-                        MainScreen(
-                            viewModel = mainScreenViewModel
-                        )
-                    }
+                NavHost(navController = navController, startDestination = AppRouter.Main.path) {
+//                    composable(AppRouter.Splash.path) {
+//                        MainScreen(
+//                            viewModel = mainScreenViewModel
+//                        )
+//                    }
                     composable(AppRouter.Main.path) {
                         MainScreen(
-                            viewModel = mainScreenViewModel
+                            viewModel = mainScreenViewModel,
+                            onTapHowToUse = { navController.navigate(AppRouter.HowToUseRouter.path) },
+                            onTapInformation = {navController.navigate(AppRouter.Information.path)}
                         )
                     }
                     composable(AppRouter.HowToUseRouter.path) {
                         HowToUseScreen(
-                            url = "https://kaito-kitaya.gitbook.io/worldinfo_terms_of_use"
+                            url = "https://kaito-kitaya.gitbook.io/worldinfo_terms_of_use",
+                            onTapBackToMain = {navController.navigate(AppRouter.Main.path)}
                         )
+                    }
+                    composable(AppRouter.Information.path) {
+                        InformationScreen(
+                            onTapBackToMain = { navController.navigate(AppRouter.Main.path) },
+                            onTapTermOfUse = { },
+                            onTapPrivacyPolicy = { })
                     }
                 }
             }

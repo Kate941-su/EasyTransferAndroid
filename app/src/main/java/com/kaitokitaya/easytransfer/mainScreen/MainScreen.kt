@@ -59,7 +59,11 @@ import kotlinx.css.label
 import timber.log.Timber
 
 @Composable
-fun MainScreen(viewModel: MainScreenViewModel) {
+fun MainScreen(
+    viewModel: MainScreenViewModel,
+    onTapHowToUse: VoidCallback,
+    onTapInformation: VoidCallback,
+) {
     val ipAddress = viewModel.ipAddress.collectAsState()
     val serverStatus = viewModel.serverStatus.collectAsState()
     val isNeedRefresh = viewModel.isNeedRefresh.collectAsState()
@@ -100,6 +104,8 @@ fun MainScreen(viewModel: MainScreenViewModel) {
                 viewModel.onStart()
             }
         },
+        onTapHowToUse = onTapHowToUse,
+        onTapInformation = onTapInformation,
     )
 }
 
@@ -113,6 +119,8 @@ fun MainPage(
     scope: CoroutineScope,
     onTapRefresh: VoidCallback,
     onTapPowerButton: VoidCallback,
+    onTapHowToUse: VoidCallback,
+    onTapInformation: VoidCallback,
 ) {
     val modalWindowWidth = LocalConfiguration.current.screenWidthDp * 2 / 3
     ModalNavigationDrawer(drawerContent = {
@@ -124,10 +132,13 @@ fun MainPage(
                 style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 24.sp),
                 modifier = Modifier.padding(12.dp)
             )
-            NavigationDrawerItem(label = { Text(text = "Main") }, selected = false, onClick = { })
-            NavigationDrawerItem(label = { Text(text = "How To Use") }, selected = false, onClick = { })
-//            NavigationDrawerItem(label = { Text(text = "Terms of Use") }, selected = false, onClick = { })
-//            NavigationDrawerItem(label = { Text(text = "Privacy Policy") }, selected = false, onClick = { })
+            NavigationDrawerItem(label = { Text(text = "Main") }, selected = false, onClick = {
+                scope.launch {
+                    drawerState.close()
+                }
+            })
+            NavigationDrawerItem(label = { Text(text = "How To Use") }, selected = false, onClick = onTapHowToUse)
+            NavigationDrawerItem(label = { Text(text = "Information") }, selected = false, onClick = onTapInformation)
         }
     }, drawerState = drawerState) {
         Scaffold(
@@ -221,6 +232,8 @@ fun MainScreenPreview() {
         drawerState = DrawerState(initialValue = DrawerValue.Open),
         scope = scope,
         onTapRefresh = {},
-        onTapPowerButton = {}
+        onTapPowerButton = {},
+        onTapHowToUse = {},
+        onTapInformation = {},
     )
 }
