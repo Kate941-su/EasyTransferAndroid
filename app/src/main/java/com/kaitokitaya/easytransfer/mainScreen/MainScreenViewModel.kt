@@ -26,18 +26,64 @@ class MainScreenViewModel(
     private val _serverStatusFlow = MutableStateFlow<ServerStatus>(ServerStatus.Standby)
     var serverStatus: StateFlow<ServerStatus> = _serverStatusFlow.asStateFlow()
 
+    private val _isNeedRefreshFlow = MutableStateFlow<Boolean>(false)
+    val isNeedRefresh: MutableStateFlow<Boolean> get() = _isNeedRefreshFlow
+
+    init {
+        viewModelScope.launch {
+            httpServer.isNeedRefresh.collect {
+                isNeedRefresh.value = it
+            }
+        }
+    }
+
     fun onStart() {
         viewModelScope.launch {
-            onLoading()
-            delay(100)
-            _serverStatusFlow.update {
-                ServerStatus.Launching
-                httpServer.start()
-            }
+            startServer()
         }
         _ipAddressFlow.update {
             // TODO: No internet handling
             connectiveManagerWrapper.getIPAddress()
+        }
+    }
+
+    fun onStop() {
+        viewModelScope.launch {
+            stopServer()
+        }
+        _ipAddressFlow.update {
+            null
+        }
+    }
+
+    fun onRefresh() {
+        viewModelScope.launch {
+            _serverStatusFlow.update {
+                ServerStatus.Refresh
+            }
+            stopServer()
+            startServer()
+            _serverStatusFlow.update {
+                ServerStatus.Working
+            }
+            httpServer.changeIsNeedRefresh(isNeedRefresh = false)
+        }
+    }
+
+    private suspend fun startServer() {
+        onLoading()
+        delay(100)
+        _serverStatusFlow.update {
+            ServerStatus.Launching
+            httpServer.start()
+        }
+    }
+
+    private suspend fun stopServer() {
+        onLoading()
+        delay(100)
+        _serverStatusFlow.update {
+            httpServer.stop()
         }
     }
 
@@ -48,19 +94,6 @@ class MainScreenViewModel(
                 ServerStatus.Standby -> ServerStatus.Launching
                 else -> it
             }
-        }
-    }
-
-    fun onStop() {
-        viewModelScope.launch {
-            onLoading()
-            delay(100)
-            _serverStatusFlow.update {
-                httpServer.stop()
-            }
-        }
-        _ipAddressFlow.update {
-            null
         }
     }
 

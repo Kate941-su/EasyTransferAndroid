@@ -30,6 +30,7 @@ import io.ktor.server.routing.routing
 import io.netty.handler.codec.DefaultHeaders
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.css.Align
 import kotlinx.css.Border
 import kotlinx.css.BorderCollapse
@@ -103,18 +104,12 @@ import java.nio.file.Files
 
 // TODO: Use hilt
 class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper, private val httpClient: HttpClient) {
-
     companion object {
         const val PORT = 8080
     }
 
-
     private var server: NettyApplicationEngine? = null
     private val TAG = "HttpServer"
-    private val queryKeyDownload = "download"
-
-
-    private val logger by lazy { LoggerFactory.getLogger("ApplicationLogger") }
     private val responseLogs = mutableListOf<String>()
     private val rootPath = Environment.getExternalStorageDirectory().absolutePath
     private val absDirPathList = mutableListOf<String>()
@@ -123,13 +118,19 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     private var invalidFileName: String? = null
     private var isFileEmpty = false
 
-    private val _serverStatusFlow = MutableStateFlow<ServerStatus>(ServerStatus.Standby)
-    val serverStatus: MutableStateFlow<ServerStatus> get() = _serverStatusFlow
+    private val _isNeedRefreshFlow = MutableStateFlow(false)
+    val isNeedRefresh: MutableStateFlow<Boolean> get() = _isNeedRefreshFlow
 
     init {
         absDirPathList.add(rootPath)
         getAllDirectoryPath(Environment.getExternalStorageDirectory().absolutePath)
         Timber.tag(TAG).d(absDirPathList.toString())
+    }
+
+    fun changeIsNeedRefresh(isNeedRefresh: Boolean) {
+        _isNeedRefreshFlow.update {
+            isNeedRefresh
+        }
     }
 
     private fun getAllDirectoryPath(path: String) {
@@ -248,6 +249,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                 val fileBytes = it.streamProvider().readBytes()
                                 if (fileBytes.isEmpty()) {
                                     isFileEmpty = true
+                                    invalidFileName = null
                                     call.respondRedirect(
                                         "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
                                             getRelativePath(
@@ -265,8 +267,9 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                     file.outputStream().use { output ->
                                         output.write(fileBytes)
                                     }
-                                    absFilePathList.add(absPath)
+                                    absFilePathList.add(file.absolutePath)
                                     invalidFileName = null
+                                    changeIsNeedRefresh(isNeedRefresh = true)
                                 } catch (e: Throwable) {
                                     assert(false) {
                                         Timber.tag(TAG).d("Could not download file data to storage.")

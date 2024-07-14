@@ -1,5 +1,8 @@
 package com.kaitokitaya.easytransfer.mainScreen.model
 
+// State transition of ServerStatus
+// ServerStatus.Standby ---(Tap power on)---> ServerStatus.Launching ---(succeeded)---> ServerStatus.Working
+//                     <---              ---- ServerStatus.Shutdown  <---(power off)---
 sealed class ServerStatus {
     open val stateName: String = ""
 
@@ -22,8 +25,9 @@ sealed class ServerStatus {
         override val stateName: String
             get() = "Working"
     }
-}
 
-// State transition of ServerStatus
-// ServerStatus.Standby ---(Tap power on)---> ServerStatus.Launching ---(succeeded)---> ServerStatus.Working
-//                     <---              ---- ServerStatus.Shutdown  <---(power off)---
+    data object Refresh : ServerStatus() {
+        override val stateName: String
+            get() = "Refreshing..."
+    }
+}

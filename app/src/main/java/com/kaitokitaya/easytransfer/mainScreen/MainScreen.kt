@@ -1,5 +1,7 @@
 package com.kaitokitaya.easytransfer.mainScreen
 
+import androidx.compose.animation.core.animateIntOffsetAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,14 +48,23 @@ import timber.log.Timber
 fun MainScreen(viewModel: MainScreenViewModel) {
     val ipAddress = viewModel.ipAddress.collectAsState()
     val serverStatus = viewModel.serverStatus.collectAsState()
+    val isNeedRefresh = viewModel.isNeedRefresh.collectAsState()
+
+//    var offset by animateIntOffsetAsState(targetValue = )
+
     LaunchedEffect(Unit) {
         viewModel.startStorageAccessPermissionRequest()
         val dir = viewModel.getDirectoryItem()
         Timber.tag("MainScreen").d(dir?.toString())
     }
+
     MainPage(
         ipAddress = ipAddress.value,
         serverStatus = serverStatus.value,
+        isNeedRefresh = isNeedRefresh.value,
+        onTapRefresh = {
+            viewModel.onRefresh()
+        },
         onTapPowerButton = {
             if (serverStatus.value == ServerStatus.Working) {
                 viewModel.onLoading()
@@ -69,6 +81,8 @@ fun MainScreen(viewModel: MainScreenViewModel) {
 fun MainPage(
     ipAddress: String?,
     serverStatus: ServerStatus,
+    isNeedRefresh: Boolean,
+    onTapRefresh: VoidCallback,
     onTapPowerButton: VoidCallback,
 ) {
     Scaffold { innerPadding ->
@@ -88,7 +102,7 @@ fun MainPage(
                         modifier = Modifier.size(100.dp),
                         containerColor = when (serverStatus) {
                             ServerStatus.Standby -> Color.Green
-                            ServerStatus.Launching, ServerStatus.Shutdown -> Color.Yellow
+                            ServerStatus.Launching, ServerStatus.Shutdown, ServerStatus.Refresh -> Color.Yellow
                             ServerStatus.Working -> Color.Red
                         },
                         contentColor = Color.White,
@@ -122,6 +136,17 @@ fun MainPage(
                             )
                         }
                     }
+                    ElevatedButton(
+                        onClick = onTapRefresh,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor =
+                            if (isNeedRefresh) Color(0xFFFF7043)
+                            else Color(0x00FF7043)
+                        ),
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+                        Text(text = "Refresh")
+                    }
                 }
             }
         }
@@ -134,6 +159,8 @@ fun MainScreenPreview() {
     MainPage(
         ipAddress = "192.168.1.22:",
         serverStatus = ServerStatus.Standby,
+        isNeedRefresh = false,
+        onTapRefresh = {},
         onTapPowerButton = {}
     )
 }
