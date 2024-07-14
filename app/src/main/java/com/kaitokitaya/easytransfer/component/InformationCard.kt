@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,11 +29,13 @@ fun InformationCard(
     subTitle: String? = null,
     onTapCard: VoidCallback? = null
 ) {
-    Box(modifier = Modifier.padding(24.dp).clickable {
-        if (onTapCard != null) {
-            onTapCard()
-        }
-    }) {
+    Box(modifier = Modifier
+        .padding(24.dp)
+        .clickable {
+            if (onTapCard != null) {
+                onTapCard()
+            }
+        }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             icon()
             Box(modifier = Modifier.padding(end = 24.dp))
@@ -41,7 +44,7 @@ fun InformationCard(
                     text = title,
                     style = TextStyle(
                         fontWeight = FontWeight.Bold,
-                        color = if (onTapCard != null) Color.Blue else Color.Black
+                        color = if (onTapCard != null) Color.Blue else MaterialTheme.colorScheme.onBackground
                     )
                 )
                 subTitle?.let {

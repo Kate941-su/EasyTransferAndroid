@@ -70,7 +70,7 @@ fun InformationPage(
                 icon = { Icon(imageVector = Icons.Default.Email, contentDescription = "contact") },
                 title = "Contact",
                 subTitle = email,
-                onTapCard = { context.sendEmail(to = email, subject = "inquiry") }
+                onTapCard = { context.sendEmail(to = email, subject = "inquiry: ") }
             )
             InformationCard(
                 icon = {

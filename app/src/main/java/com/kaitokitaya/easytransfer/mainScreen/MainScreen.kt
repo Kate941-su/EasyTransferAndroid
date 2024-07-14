@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
@@ -39,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
@@ -92,6 +94,7 @@ fun MainScreen(
         animatedColor = animatedColor,
         drawerState = drawerState,
         scope = scope,
+        isNeedRefresh = isNeedRefresh.value,
         onTapRefresh = {
             viewModel.onRefresh()
         },
@@ -117,6 +120,7 @@ fun MainPage(
     animatedColor: Color,
     drawerState: DrawerState,
     scope: CoroutineScope,
+    isNeedRefresh: Boolean,
     onTapRefresh: VoidCallback,
     onTapPowerButton: VoidCallback,
     onTapHowToUse: VoidCallback,
@@ -212,7 +216,11 @@ fun MainPage(
                             colors = ButtonDefaults.buttonColors(animatedColor),
                             modifier = Modifier.padding(12.dp)
                         ) {
-                            Text(text = "Refresh")
+                            Text(
+                                text = "Refresh",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                modifier = if (isNeedRefresh) Modifier.alpha(1.0F) else Modifier.alpha(.2F)
+                            )
                         }
                     }
                 }
@@ -229,8 +237,10 @@ fun MainScreenPreview() {
         ipAddress = "192.168.1.22:",
         serverStatus = ServerStatus.Standby,
         animatedColor = Color(0xFFFF7043),
-        drawerState = DrawerState(initialValue = DrawerValue.Open),
+//        drawerState = DrawerState(initialValue = DrawerValue.Open),
+        drawerState = DrawerState(initialValue = DrawerValue.Closed),
         scope = scope,
+        isNeedRefresh = false,
         onTapRefresh = {},
         onTapPowerButton = {},
         onTapHowToUse = {},
