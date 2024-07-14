@@ -10,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import androidx.navigation.activity
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -107,7 +108,10 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable(AppRouter.Information.path) {
+                        val activity = this@MainActivity
+                        val versionName = activity.packageManager.getPackageInfo(activity.packageName, 0).versionName
                         InformationScreen(
+                            versionName = versionName,
                             onTapBackToMain = { navController.navigate(AppRouter.Main.path) },
                             onTapTermOfUse = { },
                             onTapPrivacyPolicy = { })
