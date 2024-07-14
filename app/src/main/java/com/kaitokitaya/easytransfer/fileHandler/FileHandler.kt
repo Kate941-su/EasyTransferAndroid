@@ -2,6 +2,8 @@ package com.kaitokitaya.easytransfer.fileHandler
 
 import android.os.Environment
 import java.io.File
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 object FileHandler {
 
@@ -23,6 +25,8 @@ object FileHandler {
         return path.substringBeforeLast("/")
     }
 
-
-
+    // Judge whether it is necessary to convert file name because of containing special character.
+    fun convertFileName(fileName: String): String {
+        return URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
+    }
 }

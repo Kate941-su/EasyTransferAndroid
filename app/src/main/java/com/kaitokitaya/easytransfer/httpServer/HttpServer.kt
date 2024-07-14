@@ -167,6 +167,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     fun stop(): ServerStatus {
         try {
             server?.stop(1000, 10000)
+            changeIsNeedRefresh(isNeedRefresh = false)
             return ServerStatus.Standby
         } catch (e: Throwable) {
             Timber.tag(TAG).d("Failed to stop server instance cause of '$e'")
@@ -261,7 +262,8 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                 } else {
                                     isFileEmpty = false
                                 }
-                                val fileName = it.originalFileName ?: "uploaded_file"
+                                val fileName =
+                                    if (it.originalFileName != null) FileHandler.convertFileName(fileName = it.originalFileName!!) else "uploaded_file"
                                 val file = File(absPath, fileName)
                                 try {
                                     file.outputStream().use { output ->
