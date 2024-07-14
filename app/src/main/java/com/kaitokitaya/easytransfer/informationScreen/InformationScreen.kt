@@ -52,7 +52,7 @@ fun InformationPage(
     onTapPrivacyPolicy: VoidCallback,
 ) {
     Scaffold(topBar = {
-        TopAppBar(title = { Text(text = AppRouter.Information.name) }, navigationIcon = {
+        TopAppBar(title = { Text(text = AppRouter.InformationRouter.name) }, navigationIcon = {
             IconButton(onClick = onTapBackToMain) {
                 Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "ArrowBack")
             }
@@ -80,7 +80,7 @@ fun InformationPage(
                     )
                 },
                 title = "Terms of Use",
-                onTapCard = {}
+                onTapCard = onTapTermOfUse
             )
             InformationCard(
                 icon = {
@@ -90,7 +90,7 @@ fun InformationPage(
                     )
                 },
                 title = "Privacy policy",
-                onTapCard = {}
+                onTapCard = onTapPrivacyPolicy
             )
         }
     }
