@@ -1,8 +1,8 @@
 package com.kaitokitaya.easytransfer.mainScreen
 
-import androidx.compose.animation.core.animateIntOffsetAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,23 +12,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,7 +43,14 @@ fun MainScreen(viewModel: MainScreenViewModel) {
     val serverStatus = viewModel.serverStatus.collectAsState()
     val isNeedRefresh = viewModel.isNeedRefresh.collectAsState()
 
-//    var offset by animateIntOffsetAsState(targetValue = )
+    val transition = updateTransition(targetState = isNeedRefresh.value, label = "")
+    val animatedColor by transition.animateColor(
+        transitionSpec = { tween(durationMillis = 1000) },
+        label = ""
+    ) {
+        if (it) Color(0xFFFF7043)
+        else Color(0x00FF7043)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.startStorageAccessPermissionRequest()
@@ -61,7 +61,7 @@ fun MainScreen(viewModel: MainScreenViewModel) {
     MainPage(
         ipAddress = ipAddress.value,
         serverStatus = serverStatus.value,
-        isNeedRefresh = isNeedRefresh.value,
+        animatedColor = animatedColor,
         onTapRefresh = {
             viewModel.onRefresh()
         },
@@ -81,7 +81,7 @@ fun MainScreen(viewModel: MainScreenViewModel) {
 fun MainPage(
     ipAddress: String?,
     serverStatus: ServerStatus,
-    isNeedRefresh: Boolean,
+    animatedColor: Color,
     onTapRefresh: VoidCallback,
     onTapPowerButton: VoidCallback,
 ) {
@@ -114,7 +114,7 @@ fun MainPage(
                             modifier = Modifier.fillMaxSize()
                         )
                     }
-                    Row {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = "Server Status 👉 ")
                         Text(
                             text = serverStatus.stateName,
@@ -124,7 +124,7 @@ fun MainPage(
                             )
                         )
                     }
-                    Row {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = "IP address 👉")
                         if (ipAddress != null) {
                             Text(
@@ -138,11 +138,7 @@ fun MainPage(
                     }
                     ElevatedButton(
                         onClick = onTapRefresh,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor =
-                            if (isNeedRefresh) Color(0xFFFF7043)
-                            else Color(0x00FF7043)
-                        ),
+                        colors = ButtonDefaults.buttonColors(animatedColor),
                         modifier = Modifier.padding(12.dp)
                     ) {
                         Text(text = "Refresh")
@@ -159,7 +155,7 @@ fun MainScreenPreview() {
     MainPage(
         ipAddress = "192.168.1.22:",
         serverStatus = ServerStatus.Standby,
-        isNeedRefresh = false,
+        animatedColor = Color(0xFFFF7043),
         onTapRefresh = {},
         onTapPowerButton = {}
     )
