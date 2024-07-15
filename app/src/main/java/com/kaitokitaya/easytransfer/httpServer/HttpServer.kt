@@ -370,7 +370,10 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                                             +it.name
                                                         }
                                                     } else {
-                                                        +it.name
+                                                        val extension = FileHandler.getFileExtension(it.name)
+                                                        val displayFileName =
+                                                            FileHandler.getShortName(input = it.name, maxLength = 25)
+                                                        +"$displayFileName.$extension"
                                                     }
                                                 }
 

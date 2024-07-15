@@ -1,5 +1,6 @@
 package com.kaitokitaya.easytransfer.fileHandler
 
+import android.health.connect.datatypes.units.Length
 import android.os.Environment
 import java.io.File
 import java.net.URLEncoder
@@ -29,4 +30,17 @@ object FileHandler {
     fun convertFileName(fileName: String): String {
         return URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
     }
+
+    fun getFileExtension(fileName: String): String {
+        return fileName.substringAfterLast(".", missingDelimiterValue = "")
+    }
+
+    fun getShortName(input: String, maxLength: Int): String {
+        return if (input.length > maxLength) {
+            return "${input.take(maxLength - 3)}･･･"
+        } else {
+            input
+        }
+    }
+
 }

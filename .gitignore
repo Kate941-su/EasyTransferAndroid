@@ -15,3 +15,4 @@
 local.properties
 release.keystore
 key.properties
+/app/src/main/java/com/kaitokitaya/easytransfer/constant/Secret.kt
