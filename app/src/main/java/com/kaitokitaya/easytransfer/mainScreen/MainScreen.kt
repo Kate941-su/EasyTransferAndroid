@@ -212,7 +212,7 @@ fun MainPage(
                             }
                         }
                         ElevatedButton(
-                            onClick = onTapRefresh,
+                            onClick = { if (isNeedRefresh) onTapRefresh() },
                             colors = ButtonDefaults.buttonColors(animatedColor),
                             modifier = Modifier.padding(12.dp)
                         ) {
