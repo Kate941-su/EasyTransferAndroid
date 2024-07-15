@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.ads.MobileAds
 import com.kaitokitaya.easytransfer.howToUseScreen.HowToUseScreen
 import com.kaitokitaya.easytransfer.httpServer.ConnectiveManagerWrapper
 import com.kaitokitaya.easytransfer.httpServer.HttpClient
@@ -24,6 +25,9 @@ import com.kaitokitaya.easytransfer.privacyPolicyScreen.PrivacyPolicyScreen
 import com.kaitokitaya.easytransfer.router.AppRouter
 import com.kaitokitaya.easytransfer.termsOfUseScreen.TermsOfUseScreen
 import com.kaitokitaya.easytransfer.ui.theme.EasyTransferTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
@@ -75,6 +79,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val backgroundScope = CoroutineScope(Dispatchers.IO)
+        backgroundScope.launch {
+            // Initialize the Google Mobile Ads SDK on a background thread.
+            MobileAds.initialize(this@MainActivity) {}
+        }
         Timber.plant(Timber.DebugTree())
         enableEdgeToEdge()
         setContent {
@@ -119,7 +128,7 @@ class MainActivity : ComponentActivity() {
                     }
                     composable(AppRouter.TermsOfUseRouter.path) {
                         TermsOfUseScreen(
-                            url = "https://kaito-kitaya.gitbook.io/how-to-use-easytransfer/2.-how-to-use-this-app",
+                            url = "https://kaito-kitaya.gitbook.io/how-to-use-easytransfer/4.-terms-of-use",
                             onTapBackArrow = {navController.navigate(AppRouter.InformationRouter.path)}
                         )
                     }

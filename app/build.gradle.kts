@@ -14,6 +14,7 @@ if (localPropertiesFile.exists()) {
     }
 }
 
+
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()
 
@@ -38,6 +39,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        val adsApplicationId: String = localProperties.getProperty("adsApplicationId") ?: ""
+        manifestPlaceholders["ADS_APPLICATION_ID"] = adsApplicationId
     }
 
     signingConfigs {
@@ -140,4 +143,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Admob
+    implementation(libs.play.services.ads)
 }

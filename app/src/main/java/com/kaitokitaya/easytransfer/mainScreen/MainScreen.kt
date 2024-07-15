@@ -3,12 +3,15 @@ package com.kaitokitaya.easytransfer.mainScreen
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -51,6 +54,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaitokitaya.easytransfer.R
+import com.kaitokitaya.easytransfer.adsComponents.AdmobBanner
 import com.kaitokitaya.easytransfer.httpServer.HttpServer
 import com.kaitokitaya.easytransfer.mainScreen.model.ServerStatus
 import com.kaitokitaya.easytransfer.originalType.VoidCallback
@@ -161,7 +165,7 @@ fun MainPage(
                 )
             }
         ) { innerPadding ->
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom) {
                 Box(
                     modifier = Modifier
                         .padding(innerPadding)
@@ -172,6 +176,7 @@ fun MainPage(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+
                         FloatingActionButton(
                             onClick = onTapPowerButton,
                             modifier = Modifier.size(100.dp),
@@ -222,6 +227,15 @@ fun MainPage(
                                 modifier = if (isNeedRefresh) Modifier.alpha(1.0F) else Modifier.alpha(.2F)
                             )
                         }
+
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .align(alignment = Alignment.BottomCenter)
+                    ) {
+                        AdmobBanner()
                     }
                 }
             }
