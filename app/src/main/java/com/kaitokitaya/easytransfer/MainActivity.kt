@@ -118,14 +118,14 @@ class MainActivity : ComponentActivity() {
                             onTapPrivacyPolicy = { navController.navigate(AppRouter.PrivacyPolicyRouter.path) })
                     }
                     composable(AppRouter.TermsOfUseRouter.path) {
-                        PrivacyPolicyScreen(
+                        TermsOfUseScreen(
                             url = "https://kaito-kitaya.gitbook.io/how-to-use-easytransfer/2.-how-to-use-this-app",
                             onTapBackArrow = {navController.navigate(AppRouter.InformationRouter.path)}
                         )
                     }
-                    composable(AppRouter.TermsOfUseRouter.path) {
-                        TermsOfUseScreen(
-                            url = "https://kaito-kitaya.gitbook.io/how-to-use-easytransfer/2.-how-to-use-this-app",
+                    composable(AppRouter.PrivacyPolicyRouter.path) {
+                        PrivacyPolicyScreen(
+                            url = "https://kaito-kitaya.gitbook.io/how-to-use-easytransfer/3.-privacy-policy",
                             onTapBackArrow = {navController.navigate(AppRouter.InformationRouter.path)}
                         )
                     }
