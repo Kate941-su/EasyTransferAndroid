@@ -129,7 +129,7 @@ fun MainPage(
     val modalWindowWidth = LocalConfiguration.current.screenWidthDp * 2 / 3
     ModalNavigationDrawer(drawerContent = {
         ModalDrawerSheet(
-            modifier = Modifier.width(modalWindowWidth.dp)
+            modifier = if (drawerState.isOpen) Modifier.width(modalWindowWidth.dp) else Modifier.width(0.dp)
         ) {
             Text(
                 text = "Menu",
