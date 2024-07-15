@@ -1,6 +1,7 @@
 package com.kaitokitaya.easytransfer
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -83,6 +84,11 @@ class MainActivity : ComponentActivity() {
         backgroundScope.launch {
             // Initialize the Google Mobile Ads SDK on a background thread.
             MobileAds.initialize(this@MainActivity) {}
+        }
+        val intent = Intent(this, ForegroundService::class.java)
+//        this.startForegroundService(intent)
+        Intent(this, ForegroundService::class.java).also {
+            ContextCompat.startForegroundService(this, it)
         }
         Timber.plant(Timber.DebugTree())
         enableEdgeToEdge()
