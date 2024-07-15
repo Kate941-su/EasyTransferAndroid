@@ -39,8 +39,15 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        val adsApplicationId: String = localProperties.getProperty("adsApplicationId") ?: ""
-        manifestPlaceholders["ADS_APPLICATION_ID"] = adsApplicationId
+        val adsProjectId: String = localProperties.getProperty("adsProjectId") ?: ""
+        manifestPlaceholders["ADS_PROJECT_ID"] = adsProjectId
+
+        val bannerDevId = localProperties.getProperty("bannerDev") ?: ""
+        val bannerPrdId = localProperties.getProperty("bannerPrd") ?: ""
+
+        buildConfigField("String", "ADS_BANNER_ID_DEV", "\"${System.getenv("ADS_APPLICATION_ID_DEV") ?: bannerDevId}\"")
+        buildConfigField("String", "ADS_BANNER_ID_PRD", "\"${System.getenv("ADS_APPLICATION_ID_PRD") ?: bannerPrdId}\"")
+        buildConfigField("String", "ADS_APPLICATION_PROJECT_ID", "\"${System.getenv("ADS_APPLICATION_PROJECT_ID") ?: adsProjectId}\"")
     }
 
     signingConfigs {
@@ -92,6 +99,7 @@ android {
         jvmTarget = "1.8"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     composeOptions {
