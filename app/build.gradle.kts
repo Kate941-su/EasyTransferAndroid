@@ -76,7 +76,7 @@ android {
             resValue("string", "app_name", "STG EASY TRANSFER")
         }
         create("production") {
-            versionCode = 2
+            versionCode = 3
             versionName = "1.0.0"
         }
     }
