@@ -46,7 +46,7 @@ class ForegroundService : Service() {
             NotificationCompat.Builder(this, CHANNEL_ID).setContentTitle("Easy Transfer is still running")
                 .setContentText("Tap to open the app")
                 .setSmallIcon(R.drawable.ic_notification)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
