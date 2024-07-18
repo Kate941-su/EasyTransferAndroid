@@ -62,7 +62,6 @@ open class CustomActivity : ComponentActivity() {
 
     @RequiresApi(Build.VERSION_CODES.R)
     open fun requestManageExternalStoragePermission() {
-
         if (!Environment.isExternalStorageManager()) {
             val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
             intent.data = Uri.parse("package:${applicationContext.packageName}")

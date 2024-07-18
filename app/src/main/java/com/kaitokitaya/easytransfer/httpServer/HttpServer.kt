@@ -113,8 +113,9 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     private val TAG = "HttpServer"
     private val responseLogs = mutableListOf<String>()
     private val rootPath = Environment.getExternalStorageDirectory().absolutePath
-    private val absDirPathList = mutableListOf<String>()
-    private val absFilePathList = mutableListOf<String>()
+    private var absDirPathList = mutableListOf<String>()
+    private var absFilePathList = mutableListOf<String>()
+    private val entireTreeMap = mutableMapOf<String, List<String>>()
 
     private var invalidFileName: String? = null
     private var isFileEmpty = false
@@ -123,8 +124,6 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     val isNeedRefresh: MutableStateFlow<Boolean> get() = _isNeedRefreshFlow
 
     init {
-        absDirPathList.add(rootPath)
-        getAllDirectoryPath(Environment.getExternalStorageDirectory().absolutePath)
         Timber.tag(TAG).d(absDirPathList.toString())
     }
 
@@ -134,8 +133,16 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
         }
     }
 
+    private fun initialize() {
+        absDirPathList = mutableListOf()
+        absFilePathList = mutableListOf()
+        absDirPathList.add(rootPath)
+        getAllDirectoryPath(Environment.getExternalStorageDirectory().absolutePath)
+    }
+
     private fun getAllDirectoryPath(path: String) {
         val fileList = FileHandler.getAllFilesFromAbsPath(path)
+        entireTreeMap[path] = fileList?.let { list -> list.map { it.absolutePath } } ?: emptyList()
         fileList?.forEach {
             val absPath = it.absolutePath
             if (it.isDirectory) {
@@ -149,6 +156,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
 
 
     fun start(): ServerStatus {
+        initialize()
         try {
             server = embeddedServer(Netty, port = PORT) {
                 callLoggingModule()
@@ -229,11 +237,11 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                 val relativePath = getRelativePath(absPath = absFilePath)
                 // For downloading files
                 get(relativePath) {
-//                    val file = File(absFilePath)
-//                    if (file.exists()) {
-//                        call.response.header(HttpHeaders.ContentDisposition, "attachment")
-//                        call.respondFile(file)
-//                    }
+                    val file = File(absFilePath)
+                    if (file.exists()) {
+                        call.response.header(HttpHeaders.ContentDisposition, "attachment")
+                        call.respondFile(file)
+                    }
                 }
             }
 
@@ -299,10 +307,17 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                     )
                 }
 
-                // For showing directory
+                // For showing directories and files
                 get(relativePath) {
                     call.respondHtml(HttpStatusCode.OK) {
                         val fileList = FileHandler.getAllFilesFromAbsPath(absPath)
+                        fileList?.let { updatedPathList ->
+                            entireTreeMap[absPath]?.let { cachedPathList ->
+                                if (updatedPathList.size != cachedPathList.size) {
+                                    _isNeedRefreshFlow.value = true
+                                }
+                            }
+                        }
                         head {
                             link(rel = "stylesheet", href = "/styles.css", type = "text/css")
                             link(
