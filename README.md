@@ -15,6 +15,7 @@ https://kaito-kitaya.gitbook.io/how-to-use-easytransfer/2.-how-to-use-this-app
 - https://medium.com/@amodpkanthe/androids-jetpack-compose-and-admob-ads-33948c55214a
 - [ ] Error handling when users try to launch it without the Internet environment
     - [ ] Show messages when occurring the above errors
+    - [ ] some file formats (ex .pdf) don't appear 
 
 ## Tasks for v1.2
 - [ ] Becoming an access point myself

@@ -31,13 +31,14 @@ object FileHandler {
         return URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
     }
 
-    fun getFileExtension(fileName: String): String {
+    private fun getFileExtension(fileName: String): String {
         return fileName.substringAfterLast(".", missingDelimiterValue = "")
     }
 
     fun getShortName(input: String, maxLength: Int): String {
         return if (input.length > maxLength) {
-            return "${input.take(maxLength - 3)}･･･"
+            val extension = getFileExtension(input)
+            return "${input.take(maxLength - 3)}･･･$extension"
         } else {
             input
         }

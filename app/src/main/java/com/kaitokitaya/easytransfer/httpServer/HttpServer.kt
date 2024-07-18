@@ -229,11 +229,11 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                 val relativePath = getRelativePath(absPath = absFilePath)
                 // For downloading files
                 get(relativePath) {
-                    val file = File(absFilePath)
-                    if (file.exists()) {
-                        call.response.header(HttpHeaders.ContentDisposition, "attachment")
-                        call.respondFile(file)
-                    }
+//                    val file = File(absFilePath)
+//                    if (file.exists()) {
+//                        call.response.header(HttpHeaders.ContentDisposition, "attachment")
+//                        call.respondFile(file)
+//                    }
                 }
             }
 
@@ -371,10 +371,9 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                                             +it.name
                                                         }
                                                     } else {
-                                                        val extension = FileHandler.getFileExtension(it.name)
                                                         val displayFileName =
                                                             FileHandler.getShortName(input = it.name, maxLength = 25)
-                                                        +"$displayFileName.$extension"
+                                                        +displayFileName
                                                     }
                                                 }
 
