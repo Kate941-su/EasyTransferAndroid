@@ -1,4 +1,4 @@
-package com.kaitokitaya.easytransfer.mainScreen.model
+package com.kaitokitaya.easytransfer.screen.mainScreen.model
 
 // State transition of ServerStatus
 // ServerStatus.Standby ---(Tap power on)---> ServerStatus.Launching ---(succeeded)---> ServerStatus.Working

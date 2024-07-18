@@ -1,4 +1,4 @@
-package com.kaitokitaya.easytransfer.howToUseScreen
+package com.kaitokitaya.easytransfer.screen.howToUseScreen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview

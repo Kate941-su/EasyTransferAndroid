@@ -1,11 +1,11 @@
-package com.kaitokitaya.easytransfer.mainScreen
+package com.kaitokitaya.easytransfer.screen.mainScreen
 
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaitokitaya.easytransfer.httpServer.ConnectiveManagerWrapper
 import com.kaitokitaya.easytransfer.httpServer.HttpServer
-import com.kaitokitaya.easytransfer.mainScreen.model.ServerStatus
+import com.kaitokitaya.easytransfer.screen.mainScreen.model.ServerStatus
 import com.kaitokitaya.easytransfer.originalType.VoidCallback
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

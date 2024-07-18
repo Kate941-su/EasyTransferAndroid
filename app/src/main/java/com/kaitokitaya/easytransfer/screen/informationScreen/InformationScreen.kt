@@ -1,4 +1,4 @@
-package com.kaitokitaya.easytransfer.informationScreen
+package com.kaitokitaya.easytransfer.screen.informationScreen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding

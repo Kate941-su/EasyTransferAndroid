@@ -1,5 +1,7 @@
-package com.kaitokitaya.easytransfer.mainScreen
+package com.kaitokitaya.easytransfer.screen.mainScreen
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
@@ -47,16 +49,19 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
 import com.kaitokitaya.easytransfer.R
 import com.kaitokitaya.easytransfer.adsComponents.AdmobBanner
+import com.kaitokitaya.easytransfer.extensions.context.goToLink
 import com.kaitokitaya.easytransfer.httpServer.HttpServer
-import com.kaitokitaya.easytransfer.mainScreen.model.ServerStatus
+import com.kaitokitaya.easytransfer.screen.mainScreen.model.ServerStatus
 import com.kaitokitaya.easytransfer.originalType.VoidCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -131,6 +136,7 @@ fun MainPage(
     onTapInformation: VoidCallback,
 ) {
     val modalWindowWidth = LocalConfiguration.current.screenWidthDp * 2 / 3
+    val context = LocalContext.current
     ModalNavigationDrawer(drawerContent = {
         ModalDrawerSheet(
             modifier = if (drawerState.isOpen) Modifier.width(modalWindowWidth.dp) else Modifier.width(0.dp)
@@ -145,7 +151,9 @@ fun MainPage(
                     drawerState.close()
                 }
             })
-            NavigationDrawerItem(label = { Text(text = "How To Use") }, selected = false, onClick = onTapHowToUse)
+            NavigationDrawerItem(label = { Text(text = "How To Use") }, selected = false, onClick = {
+                context.goToLink("https://kaito-kitaya.gitbook.io/how-to-use-easytransfer/2.-how-to-use-this-app")
+            })
             NavigationDrawerItem(label = { Text(text = "Information") }, selected = false, onClick = onTapInformation)
         }
     }, drawerState = drawerState) {
