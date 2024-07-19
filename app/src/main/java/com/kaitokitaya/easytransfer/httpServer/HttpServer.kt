@@ -124,6 +124,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     val isNeedRefresh: MutableStateFlow<Boolean> get() = _isNeedRefreshFlow
 
     init {
+        connectiveManagerWrapper.checkNetworkCapabilities()
         Timber.tag(TAG).d(absDirPathList.toString())
     }
 
