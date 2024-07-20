@@ -11,6 +11,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
@@ -29,10 +31,35 @@ class MainScreenViewModel(
     private val _isNeedRefreshFlow = MutableStateFlow<Boolean>(false)
     val isNeedRefresh: MutableStateFlow<Boolean> get() = _isNeedRefreshFlow
 
+    private val _isAvailableFlow = MutableStateFlow<Boolean>(false)
+    val isAvailable: MutableStateFlow<Boolean> get() = _isAvailableFlow
+
     init {
         viewModelScope.launch {
-            httpServer.isNeedRefresh.collect {
-                isNeedRefresh.value = it
+            combine(
+                httpServer.isNeedRefresh,
+                connectiveManagerWrapper.isAvailable
+            ) { isNeedRefreshValue, isAvailableValue ->
+                Pair(
+                    isNeedRefreshValue,
+                    isAvailableValue
+                )
+            }.collect { (isNeedRefreshValue, isAvailableValue) ->
+                isNeedRefresh.value = isNeedRefreshValue
+                if (isAvailableValue) {
+                    if (_serverStatusFlow.value == ServerStatus.Unavailable) {
+                        _serverStatusFlow.update {
+                            ServerStatus.Standby
+                        }
+                    }
+                } else {
+                    if (_serverStatusFlow.value != ServerStatus.Unavailable) {
+                        stopServer()
+                        _serverStatusFlow.update {
+                            ServerStatus.Unavailable
+                        }
+                    }
+                }
             }
         }
     }
@@ -42,8 +69,7 @@ class MainScreenViewModel(
             startServer()
         }
         _ipAddressFlow.update {
-            // TODO: No internet handling
-            connectiveManagerWrapper.getIPAddress()
+            connectiveManagerWrapper.getStringIpv4Address()
         }
     }
 

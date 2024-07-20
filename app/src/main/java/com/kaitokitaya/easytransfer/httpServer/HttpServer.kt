@@ -123,8 +123,10 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
     private val _isNeedRefreshFlow = MutableStateFlow(false)
     val isNeedRefresh: MutableStateFlow<Boolean> get() = _isNeedRefreshFlow
 
+    private val _isNetworkAvailableFlow = MutableStateFlow(false)
+    val isNetworkAvailable: MutableStateFlow<Boolean> get() = _isNetworkAvailableFlow
+
     init {
-        connectiveManagerWrapper.checkNetworkCapabilities()
         Timber.tag(TAG).d(absDirPathList.toString())
     }
 
@@ -252,7 +254,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                 // For uploading files
                 post("$relativePath/upload") {
                     Timber.tag(TAG)
-                        .d("Upload Path => http://${connectiveManagerWrapper.getIPAddress()}:8080/$relativePath/upload")
+                        .d("Upload Path => http://${connectiveManagerWrapper.getStringIpv4Address()}:8080/$relativePath/upload")
                     val request = call.receiveMultipart()
                     request.forEachPart {
                         when (it) {
@@ -262,7 +264,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                     isFileEmpty = true
                                     invalidFileName = null
                                     call.respondRedirect(
-                                        "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                        "http://${connectiveManagerWrapper.getStringIpv4Address()}:8080/${
                                             getRelativePath(
                                                 absPath = absPath
                                             )
@@ -287,7 +289,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                         Timber.tag(TAG).d("Could not download file data to storage.")
                                         invalidFileName = fileName
                                         call.respondRedirect(
-                                            "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                            "http://${connectiveManagerWrapper.getStringIpv4Address()}:8080/${
                                                 getRelativePath(
                                                     absPath = absPath
                                                 )
@@ -304,7 +306,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                         it.dispose()
                     }
                     call.respondRedirect(
-                        "http://${connectiveManagerWrapper.getIPAddress()}:8080/${getRelativePath(absPath = absPath)}"
+                        "http://${connectiveManagerWrapper.getStringIpv4Address()}:8080/${getRelativePath(absPath = absPath)}"
                     )
                 }
 
@@ -362,7 +364,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                         tr {
                                             td {
                                                 a(
-                                                    href = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                                    href = "http://${connectiveManagerWrapper.getStringIpv4Address()}:8080/${
                                                         FileHandler.getParentPath(
                                                             relativePath
                                                         )
@@ -377,7 +379,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                                 td {
                                                     if (it.isDirectory) {
                                                         a(
-                                                            href = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                                            href = "http://${connectiveManagerWrapper.getStringIpv4Address()}:8080/${
                                                                 getRelativePath(
                                                                     it.absolutePath
                                                                 )
@@ -407,7 +409,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                                 td {
                                                     if (it.isFile) {
                                                         a(
-                                                            href = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                                            href = "http://${connectiveManagerWrapper.getStringIpv4Address()}:8080/${
                                                                 getRelativePath(
                                                                     it.absolutePath
                                                                 )
@@ -424,7 +426,7 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
                                                 form(
                                                     method = FormMethod.post,
                                                     encType = FormEncType.multipartFormData,
-                                                    action = "http://${connectiveManagerWrapper.getIPAddress()}:8080/${
+                                                    action = "http://${connectiveManagerWrapper.getStringIpv4Address()}:8080/${
                                                         getRelativePath(
                                                             absPath = absPath
                                                         )

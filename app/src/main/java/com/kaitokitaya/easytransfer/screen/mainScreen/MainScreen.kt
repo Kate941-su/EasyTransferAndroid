@@ -189,6 +189,7 @@ fun MainPage(
                             onClick = onTapPowerButton,
                             modifier = Modifier.size(100.dp),
                             containerColor = when (serverStatus) {
+                                ServerStatus.Unavailable -> Color.Gray
                                 ServerStatus.Standby -> Color.Green
                                 ServerStatus.Launching, ServerStatus.Shutdown, ServerStatus.Refresh -> Color.Yellow
                                 ServerStatus.Working -> Color.Red
@@ -214,7 +215,7 @@ fun MainPage(
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = "IP address 👉")
-                            if (ipAddress != null) {
+                            if (ipAddress != null && serverStatus == ServerStatus.Working) {
                                 Text(
                                     text = "$ipAddress:${HttpServer.PORT}",
                                     style = TextStyle(
@@ -235,7 +236,11 @@ fun MainPage(
                                 modifier = if (isNeedRefresh) Modifier.alpha(1.0F) else Modifier.alpha(.2F)
                             )
                         }
-
+                        Text(
+                            text = "Refresh",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = if (isNeedRefresh) Modifier.alpha(1.0F) else Modifier.alpha(.2F)
+                        )
                     }
                     Box(
                         modifier = Modifier

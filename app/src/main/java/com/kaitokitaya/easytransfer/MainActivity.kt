@@ -55,11 +55,13 @@ class MainActivity : CustomActivity() {
 
         Timber.plant(Timber.DebugTree())
         enableEdgeToEdge()
+        val connectiveManagerWrapper = ConnectiveManagerWrapper(context = this)
+        // When calling `registerCallback()` in initializer it will crash on `onCreate()` phase.
+        connectiveManagerWrapper.registerCallback()
+        val httpClient = HttpClient(activity = this)
+        val httpServer = HttpServer(connectiveManagerWrapper = connectiveManagerWrapper, httpClient = httpClient)
         setContent {
-            val connectiveManagerWrapper = ConnectiveManagerWrapper(context = this)
             val navController = rememberNavController()
-            val httpClient = HttpClient(activity = this)
-            val httpServer = HttpServer(connectiveManagerWrapper = connectiveManagerWrapper, httpClient = httpClient)
             val mainScreenViewModel = MainScreenViewModel(
                 connectiveManagerWrapper = connectiveManagerWrapper,
                 httpServer = httpServer,

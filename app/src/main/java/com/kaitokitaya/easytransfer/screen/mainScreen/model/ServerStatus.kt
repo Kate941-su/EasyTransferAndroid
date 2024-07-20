@@ -6,6 +6,11 @@ package com.kaitokitaya.easytransfer.screen.mainScreen.model
 sealed class ServerStatus {
     open val stateName: String = ""
 
+    data object Unavailable : ServerStatus() {
+        override val stateName: String
+            get() = "Unavailable"
+    }
+
     data object Standby : ServerStatus() {
         override val stateName: String
             get() = "Standby"
