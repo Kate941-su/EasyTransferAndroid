@@ -54,9 +54,8 @@ class MainScreenViewModel(
                     }
                 } else {
                     if (_serverStatusFlow.value != ServerStatus.Unavailable) {
-                        stopServer()
                         _serverStatusFlow.update {
-                            ServerStatus.Unavailable
+                            httpServer.gracefulUnavailable(_serverStatusFlow.value)
                         }
                     }
                 }

@@ -176,6 +176,17 @@ class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper,
         }
     }
 
+    fun gracefulUnavailable(currentStatus: ServerStatus): ServerStatus {
+        try {
+            server?.stop(1000, 10000)
+            changeIsNeedRefresh(isNeedRefresh = false)
+            return ServerStatus.Unavailable
+        } catch (e: Throwable) {
+            Timber.tag(TAG).d("Failed to stop server instance cause of '$e'")
+            return currentStatus
+        }
+    }
+
     fun stop(): ServerStatus {
         try {
             server?.stop(1000, 10000)

@@ -53,6 +53,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -236,11 +237,15 @@ fun MainPage(
                                 modifier = if (isNeedRefresh) Modifier.alpha(1.0F) else Modifier.alpha(.2F)
                             )
                         }
-                        Text(
-                            text = "Refresh",
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = if (isNeedRefresh) Modifier.alpha(1.0F) else Modifier.alpha(.2F)
-                        )
+                        if (serverStatus == ServerStatus.Unavailable) {
+                            Box {
+                                Text(
+                                    text = "Unable to provide service. \nCheck if you connected the device to Wi-Fi.",
+                                    color = Color.Red,
+                                    style = TextStyle(textAlign = TextAlign.Center),
+                                )
+                            }
+                        }
                     }
                     Box(
                         modifier = Modifier
@@ -248,7 +253,7 @@ fun MainPage(
                             .height(50.dp)
                             .align(alignment = Alignment.BottomCenter)
                     ) {
-                        AdmobBanner()
+//                        AdmobBanner()
                     }
                 }
             }
