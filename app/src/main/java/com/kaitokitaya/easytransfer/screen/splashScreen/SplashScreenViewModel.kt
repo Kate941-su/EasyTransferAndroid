@@ -5,23 +5,38 @@ import android.os.Environment
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import com.kaitokitaya.easytransfer.originalType.VoidCallback
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class SplashScreenViewModel(
     private val storageAccessPermissionCallback: VoidCallback,
     private val manageStoragePermissionCallback: VoidCallback,
     private val onFinishedLaunching: VoidCallback
 ) : ViewModel() {
+
+    private val _isShowDialogFlow = MutableStateFlow(false)
+    val isShowDialog: StateFlow<Boolean> = _isShowDialogFlow.asStateFlow()
     init {
         storageAccessPermissionCallback()
-        checkPermissions()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            checkStorageManagePermission()
+        }
     }
 
 
     @RequiresApi(Build.VERSION_CODES.R)
-    fun checkPermissions() {
+    fun checkStorageManagePermission() {
         if (Environment.isExternalStorageManager()) {
-//        showDialog => intent to Setting screen
-        //            manageStoragePermissionCallback()
+            _isShowDialogFlow.update {
+                true
+            }
         }
     }
+
+    fun onTapConfirm() {
+        manageStoragePermissionCallback()
+    }
+
 }

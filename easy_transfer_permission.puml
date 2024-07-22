@@ -1,0 +1,24 @@
+@startuml
+start
+:Open Splash screen;
+:Check Storage access permissions;
+if (Is permission granted?) then (yes)
+  :Move to Main page;
+  stop
+else (no)
+  :Open Dialog;
+  if (Did confirm dialog?) then (yes)
+  else (no)
+    : Show Indicate page;
+  endif
+    ->//merged step//;
+  repeat
+  :Open Settings page in Android;
+  if (Are permissions granted?) then (yes)
+    :Move to Main page;
+    stop
+  else (no)
+  endif
+      repeat while (Show Indicate page)
+endif
+@enduml

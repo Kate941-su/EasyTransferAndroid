@@ -29,10 +29,7 @@ class MainScreenViewModel(
     var serverStatus: StateFlow<ServerStatus> = _serverStatusFlow.asStateFlow()
 
     private val _isNeedRefreshFlow = MutableStateFlow<Boolean>(false)
-    val isNeedRefresh: MutableStateFlow<Boolean> get() = _isNeedRefreshFlow
-
-    private val _isAvailableFlow = MutableStateFlow<Boolean>(false)
-    val isAvailable: MutableStateFlow<Boolean> get() = _isAvailableFlow
+    val isNeedRefresh: StateFlow<Boolean> = _isNeedRefreshFlow.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -45,7 +42,9 @@ class MainScreenViewModel(
                     isAvailableValue
                 )
             }.collect { (isNeedRefreshValue, isAvailableValue) ->
-                isNeedRefresh.value = isNeedRefreshValue
+                _isNeedRefreshFlow.update {
+                    isNeedRefreshValue
+                }
                 if (isAvailableValue) {
                     if (_serverStatusFlow.value == ServerStatus.Unavailable) {
                         _serverStatusFlow.update {
