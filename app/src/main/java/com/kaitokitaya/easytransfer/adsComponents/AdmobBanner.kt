@@ -10,7 +10,7 @@ import com.google.android.gms.ads.AdView
 import com.kaitokitaya.easytransfer.BuildConfig
 
 @Composable
-fun AdmobBanner(modifier: Modifier = Modifier) {
+fun AdmobBanner() {
     AndroidView(
         modifier = Modifier.fillMaxWidth(),
         factory = { context ->

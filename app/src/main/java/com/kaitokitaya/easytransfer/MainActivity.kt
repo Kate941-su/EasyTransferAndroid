@@ -19,6 +19,8 @@ import com.kaitokitaya.easytransfer.screen.mainScreen.MainScreen
 import com.kaitokitaya.easytransfer.screen.mainScreen.MainScreenViewModel
 import com.kaitokitaya.easytransfer.screen.privacyPolicyScreen.PrivacyPolicyScreen
 import com.kaitokitaya.easytransfer.router.AppRouter
+import com.kaitokitaya.easytransfer.screen.splashScreen.SplashScreen
+import com.kaitokitaya.easytransfer.screen.splashScreen.SplashScreenViewModel
 import com.kaitokitaya.easytransfer.screen.termsOfUseScreen.TermsOfUseScreen
 import com.kaitokitaya.easytransfer.ui.theme.EasyTransferTheme
 import kotlinx.coroutines.CoroutineScope
@@ -43,16 +45,6 @@ class MainActivity : CustomActivity() {
             ContextCompat.startForegroundService(this, it)
         }
 
-        // Demand all files access
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            startStorageAccessPermissionRequest()
-        } else {
-            startStorageAccessPermissionRequestLaterModel()
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            requestManageExternalStoragePermission()
-        }
-
         Timber.plant(Timber.DebugTree())
         enableEdgeToEdge()
         val connectiveManagerWrapper = ConnectiveManagerWrapper(context = this)
@@ -67,14 +59,30 @@ class MainActivity : CustomActivity() {
                 httpServer = httpServer,
                 startStorageAccessPermissionRequest = {}
             )
+            val splashScreenViewModel = SplashScreenViewModel(
+                storageAccessPermissionCallback = {
+                    // Demand all files access
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                        startStorageAccessPermissionRequest()
+                    } else {
+                        startStorageAccessPermissionRequestLaterModel()
+                    }
+                },
+                manageStoragePermissionCallback = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        requestManageExternalStoragePermission()
+                    }
+                },
+                onFinishedLaunching = { navController.navigate(AppRouter.Main.path) }
+            )
             EasyTransferTheme {
                 // TODO: In product version, I have to change from Main to Splash
                 NavHost(navController = navController, startDestination = AppRouter.Main.path) {
-//                    composable(AppRouter.Splash.path) {
-//                        MainScreen(
-//                            viewModel = mainScreenViewModel
-//                        )
-//                    }
+                    composable(AppRouter.Splash.path) {
+                        SplashScreen(
+                            viewModel = splashScreenViewModel,
+                        )
+                    }
                     composable(AppRouter.Main.path) {
                         MainScreen(
                             viewModel = mainScreenViewModel,

@@ -29,7 +29,7 @@ open class CustomActivity : ComponentActivity() {
     }
 
     private val storageActivityResultLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 //Android is 11 (R) or above
                 if (Environment.isExternalStorageManager()) {
@@ -40,6 +40,17 @@ open class CustomActivity : ComponentActivity() {
                 }
             }
         }
+
+
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    open fun requestManageExternalStoragePermission() {
+        if (!Environment.isExternalStorageManager()) {
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+            intent.data = Uri.parse("package:${applicationContext.packageName}")
+            storageActivityResultLauncher.launch(intent)
+        }
+    }
 
     fun startStorageAccessPermissionRequest() {
         val readPermission = ContextCompat.checkSelfPermission(
@@ -57,15 +68,6 @@ open class CustomActivity : ComponentActivity() {
 
         if (readPermission or writePermission != PackageManager.PERMISSION_GRANTED) {
             requestPermissionLauncher.launch(requests)
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.R)
-    open fun requestManageExternalStoragePermission() {
-        if (!Environment.isExternalStorageManager()) {
-            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-            intent.data = Uri.parse("package:${applicationContext.packageName}")
-            storageActivityResultLauncher.launch(intent)
         }
     }
 
