@@ -1,5 +1,6 @@
 package com.kaitokitaya.easytransfer.util
 
+import android.net.Uri
 import java.text.SimpleDateFormat
 import java.util.Date
 

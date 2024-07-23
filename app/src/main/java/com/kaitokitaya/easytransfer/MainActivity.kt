@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -59,25 +60,36 @@ class MainActivity : CustomActivity() {
                 httpServer = httpServer,
                 startStorageAccessPermissionRequest = {}
             )
+            val a = { checkStorageAccessPermission() }
             val splashScreenViewModel = SplashScreenViewModel(
-                storageAccessPermissionCallback = {
-                    // Demand all files access
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                        startStorageAccessPermissionRequest()
+                checkPermissionCallback = {
+                    checkStorageAccessPermission()
+                },
+                checkManageExternalStorageCallback =  {
+                    if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        checkManageExternalPermission()
                     } else {
-                        startStorageAccessPermissionRequestLaterModel()
+                        true
                     }
                 },
-                manageStoragePermissionCallback = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                requestPermissionCallback = {
+                    requestStoragePermissions()
+                },
+                requestManageExternalStorageCallback = {
+                    if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         requestManageExternalStoragePermission()
+                    } else {
+                        true
                     }
+                },
+                onTapGoSettingsScreen = {
+
                 },
                 onFinishedLaunching = { navController.navigate(AppRouter.Main.path) }
             )
             EasyTransferTheme {
                 // TODO: In product version, I have to change from Main to Splash
-                NavHost(navController = navController, startDestination = AppRouter.Main.path) {
+                NavHost(navController = navController, startDestination = AppRouter.Splash.path) {
                     composable(AppRouter.Splash.path) {
                         SplashScreen(
                             viewModel = splashScreenViewModel,

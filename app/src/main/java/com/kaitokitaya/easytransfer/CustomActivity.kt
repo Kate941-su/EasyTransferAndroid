@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -21,10 +22,22 @@ open class CustomActivity : ComponentActivity() {
 //    private val _isAvailableStorageAccessFlow = MutableStateFlow(false)
 //    val isAvailableStorageAccess: MutableStateFlow<Boolean> get() = _isAvailableStorageAccessFlow
 
+    private val earlierModelPermissions = arrayOf(
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+    )
+
+    private val laterModelPermissions = arrayOf(
+        Manifest.permission.READ_MEDIA_IMAGES,
+        Manifest.permission.READ_MEDIA_AUDIO,
+        Manifest.permission.READ_MEDIA_VIDEO,
+    )
+
     companion object {
         private val TAG = CustomActivity::class.java.simpleName
     }
 
+    // Show dialog on the screen
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -33,7 +46,8 @@ open class CustomActivity : ComponentActivity() {
         }
     }
 
-    private val storageActivityResultLauncher =
+    // Move to settings screen in Android
+    private val activityResultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 //Android is 11 (R) or above
@@ -55,7 +69,13 @@ open class CustomActivity : ComponentActivity() {
     open fun requestManageExternalStoragePermission() {
         val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
         intent.data = Uri.parse("package:${applicationContext.packageName}")
-        storageActivityResultLauncher.launch(intent)
+        activityResultLauncher.launch(intent)
+    }
+
+    open fun seekPermissionFromSettingsScreen(permissionCode: String, uri: Uri) {
+        val intent = Intent(permissionCode)
+        intent.data = uri
+        activityResultLauncher.launch(intent)
     }
 
     fun checkStorageAccessPermission(): Boolean {
@@ -63,14 +83,6 @@ open class CustomActivity : ComponentActivity() {
             checkPermissionRequestLaterModel()
         } else {
             checkStorageAccessPermissionLegacyModel()
-        }
-    }
-
-    fun requestStoragePermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissionsLaterModel()
-        } else {
-            requestStoragePermissionsLegacyModel()
         }
     }
 
@@ -85,12 +97,28 @@ open class CustomActivity : ComponentActivity() {
         return readPermission or writePermission == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun requestStoragePermissionsLegacyModel() {
-        val requests = arrayOf(
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        )
-        requestPermissionLauncher.launch(requests)
+    private fun checkAndRequestPermissionLaterModel() {
+        val unGrantedPermissions = laterModelPermissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        when {
+            unGrantedPermissions.isEmpty() -> {
+
+            }
+            // shouldShowRequestPermissionRationale shows when you denied to grant the permission
+            unGrantedPermissions.any { ActivityCompat.shouldShowRequestPermissionRationale(this, it) } -> {
+
+            }
+            else -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    requestPermissionArray(laterModelPermissions)
+                } else {
+                    requestPermissionArray(earlierModelPermissions)
+                }
+            }
+        }
+
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -109,15 +137,8 @@ open class CustomActivity : ComponentActivity() {
         return imagePermission or audioPermission or videoPermission != PackageManager.PERMISSION_GRANTED
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun requestPermissionsLaterModel() {
-        requestPermissionLauncher.launch(
-            arrayOf(
-                Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.READ_MEDIA_AUDIO,
-                Manifest.permission.READ_MEDIA_VIDEO,
-            )
-        )
+    private fun requestPermissionArray(permissionList: Array<String>) {
+        requestPermissionLauncher.launch(permissionList)
     }
 
 }
