@@ -104,7 +104,7 @@ import java.io.File
 import java.nio.file.Files
 
 // TODO: Use hilt
-class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper, private val httpClient: HttpClient) {
+class HttpServer(private val connectiveManagerWrapper: ConnectiveManagerWrapper) {
     companion object {
         const val PORT = 8080
     }

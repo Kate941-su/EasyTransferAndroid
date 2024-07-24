@@ -1,11 +1,20 @@
 package com.kaitokitaya.easytransfer
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -31,6 +40,31 @@ import timber.log.Timber
 
 
 class MainActivity : CustomActivity() {
+    private val earlierModelPermissions = arrayOf(
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+    )
+
+    private val laterModelPermissions = arrayOf(
+        Manifest.permission.READ_MEDIA_IMAGES,
+        Manifest.permission.READ_MEDIA_AUDIO,
+        Manifest.permission.READ_MEDIA_VIDEO,
+    )
+
+    private val mainScreenViewModel = MainScreenViewModel(
+//        connectiveManagerWrapper = connectiveManagerWrapper,
+//        httpServer = httpServer,
+        startStorageAccessPermissionRequest = {}
+    )
+    private val splashScreenViewModel = SplashScreenViewModel(
+        checkStorageAccessPermission = {
+            checkAndRequestPermission()
+        },
+        checkManageExternalStorage = {
+            checkManageExternalPermission()
+        },
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val backgroundScope = CoroutineScope(Dispatchers.IO)
@@ -51,44 +85,11 @@ class MainActivity : CustomActivity() {
         val connectiveManagerWrapper = ConnectiveManagerWrapper(context = this)
         // When calling `registerCallback()` in initializer it will crash on `onCreate()` phase.
         connectiveManagerWrapper.registerCallback()
-        val httpClient = HttpClient(activity = this)
-        val httpServer = HttpServer(connectiveManagerWrapper = connectiveManagerWrapper, httpClient = httpClient)
+        val httpServer = HttpServer(connectiveManagerWrapper = connectiveManagerWrapper)
+        mainScreenViewModel.initialize(httpServer, connectiveManagerWrapper)
         setContent {
             val navController = rememberNavController()
-            val mainScreenViewModel = MainScreenViewModel(
-                connectiveManagerWrapper = connectiveManagerWrapper,
-                httpServer = httpServer,
-                startStorageAccessPermissionRequest = {}
-            )
-            val a = { checkStorageAccessPermission() }
-            val splashScreenViewModel = SplashScreenViewModel(
-                checkPermissionCallback = {
-                    checkStorageAccessPermission()
-                },
-                checkManageExternalStorageCallback =  {
-                    if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        checkManageExternalPermission()
-                    } else {
-                        true
-                    }
-                },
-                requestPermissionCallback = {
-                    requestStoragePermissions()
-                },
-                requestManageExternalStorageCallback = {
-                    if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        requestManageExternalStoragePermission()
-                    } else {
-                        true
-                    }
-                },
-                onTapGoSettingsScreen = {
-
-                },
-                onFinishedLaunching = { navController.navigate(AppRouter.Main.path) }
-            )
             EasyTransferTheme {
-                // TODO: In product version, I have to change from Main to Splash
                 NavHost(navController = navController, startDestination = AppRouter.Splash.path) {
                     composable(AppRouter.Splash.path) {
                         SplashScreen(
@@ -134,9 +135,65 @@ class MainActivity : CustomActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
+
+    // Show dialog on the screen
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        permissions.entries.all { it.value }
+    }
+
+    // Move to settings screen in Android
+    private val activityResultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            Toast.makeText(this, "Storage Permissions $result", Toast.LENGTH_SHORT).show()
+        }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    fun checkManageExternalPermission(): Boolean {
+        return Environment.isExternalStorageManager()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    open fun requestManageExternalStoragePermission() {
+        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+        intent.data = Uri.parse("package:${applicationContext.packageName}")
+        activityResultLauncher.launch(intent)
+    }
+
+    // Use before Build code R
+    private fun checkAndRequestPermission() {
+        val unGrantedPermissions = laterModelPermissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        when {
+            unGrantedPermissions.isEmpty() -> {
+
+            }
+            // shouldShowRequestPermissionRationale shows when you denied to grant the permission
+            unGrantedPermissions.any { ActivityCompat.shouldShowRequestPermissionRationale(this, it) } -> {
+
+            }
+
+            else -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    requestPermissionArray(laterModelPermissions)
+                } else {
+                    requestPermissionArray(earlierModelPermissions)
+                }
+            }
+        }
 
     }
+
+    private fun requestPermissionArray(permissionList: Array<String>) {
+        requestPermissionLauncher.launch(permissionList)
+    }
+
+    companion object {
+        val TAG: String = MainActivity::class.java.simpleName
+    }
+
+
 }
 

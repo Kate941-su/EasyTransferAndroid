@@ -13,30 +13,27 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SplashScreenViewModel(
-    private val checkPermissionCallback: () -> Boolean,
-    private val requestPermissionCallback: VoidCallback,
-    private val checkManageExternalStorageCallback: () -> Boolean,
-    private val requestManageExternalStorageCallback: VoidCallback,
-    private val onTapGoSettingsScreen: VoidCallback,
-    private val onFinishedLaunching: VoidCallback
+    private val checkStorageAccessPermission: VoidCallback,
+    private val checkManageExternalStorage: VoidCallback,
 ) : ViewModel() {
 
     private val _isShowDialogFlow = MutableStateFlow(false)
     val isShowDialog: StateFlow<Boolean> = _isShowDialogFlow.asStateFlow()
 
-    init {
-        // Check storage access permissions
-        if (checkPermissionCallback()) {
-            requestPermissionCallback()
-        }
-        if (checkManageExternalStorageCallback()) {
-            requestManageExternalStorageCallback()
-        }
 
+    fun checkIsGranted() {
+
+    }
+
+    init {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val result = checkManageExternalStorage()
+        } else {
+            checkStorageAccessPermission()
+        }
+        // Check storage access permissions
         viewModelScope.launch {
 
         }
-
-        onFinishedLaunching()
     }
 }

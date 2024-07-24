@@ -34,7 +34,7 @@ fun SplashScreen(viewModel: SplashScreenViewModel) {
         isShowDialog = isShowDialog.value,
         isShowIndicatePage = isShowIndicatePage,
         onDismissAlert = { isShowIndicatePage = it },
-        onConfirmAlert = { viewModel.onTapConfirm() },
+        onConfirmAlert = { /*TODO: placehold*/ },
     )
 }
 

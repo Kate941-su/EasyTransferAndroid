@@ -18,10 +18,14 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class MainScreenViewModel(
-    private val connectiveManagerWrapper: ConnectiveManagerWrapper,
-    private val httpServer: HttpServer,
+//    private val connectiveManagerWrapper: ConnectiveManagerWrapper,
+//    private val httpServer: HttpServer,
     val startStorageAccessPermissionRequest: VoidCallback
 ) : ViewModel() {
+
+    private lateinit var connectiveManagerWrapper: ConnectiveManagerWrapper
+    private lateinit var httpServer: HttpServer
+
     private val _ipAddressFlow = MutableStateFlow<String?>(null)
     var ipAddress: StateFlow<String?> = _ipAddressFlow.asStateFlow()
 
@@ -32,6 +36,39 @@ class MainScreenViewModel(
     val isNeedRefresh: StateFlow<Boolean> = _isNeedRefreshFlow.asStateFlow()
 
     init {
+//        viewModelScope.launch {
+//            combine(
+//                httpServer.isNeedRefresh,
+//                connectiveManagerWrapper.isAvailable
+//            ) { isNeedRefreshValue, isAvailableValue ->
+//                Pair(
+//                    isNeedRefreshValue,
+//                    isAvailableValue
+//                )
+//            }.collect { (isNeedRefreshValue, isAvailableValue) ->
+//                _isNeedRefreshFlow.update {
+//                    isNeedRefreshValue
+//                }
+//                if (isAvailableValue) {
+//                    if (_serverStatusFlow.value == ServerStatus.Unavailable) {
+//                        _serverStatusFlow.update {
+//                            ServerStatus.Standby
+//                        }
+//                    }
+//                } else {
+//                    if (_serverStatusFlow.value != ServerStatus.Unavailable) {
+//                        _serverStatusFlow.update {
+//                            httpServer.gracefulUnavailable(_serverStatusFlow.value)
+//                        }
+//                    }
+//                }
+//            }
+//        }
+    }
+
+    fun initialize(server: HttpServer, connectiveManager: ConnectiveManagerWrapper) {
+        httpServer = server
+        connectiveManagerWrapper = connectiveManager
         viewModelScope.launch {
             combine(
                 httpServer.isNeedRefresh,
