@@ -56,14 +56,6 @@ class MainActivity : CustomActivity() {
 //        httpServer = httpServer,
         startStorageAccessPermissionRequest = {}
     )
-    private val splashScreenViewModel = SplashScreenViewModel(
-        checkStorageAccessPermission = {
-            checkAndRequestPermission()
-        },
-        checkManageExternalStorage = {
-            checkManageExternalPermission()
-        },
-    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,12 +82,7 @@ class MainActivity : CustomActivity() {
         setContent {
             val navController = rememberNavController()
             EasyTransferTheme {
-                NavHost(navController = navController, startDestination = AppRouter.Splash.path) {
-                    composable(AppRouter.Splash.path) {
-                        SplashScreen(
-                            viewModel = splashScreenViewModel,
-                        )
-                    }
+                NavHost(navController = navController, startDestination = AppRouter.Main.path) {
                     composable(AppRouter.Main.path) {
                         MainScreen(
                             viewModel = mainScreenViewModel,

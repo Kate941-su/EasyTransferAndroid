@@ -194,6 +194,7 @@ fun MainPage(
                                 ServerStatus.Standby -> Color.Green
                                 ServerStatus.Launching, ServerStatus.Shutdown, ServerStatus.Refresh -> Color.Yellow
                                 ServerStatus.Working -> Color.Red
+                                else -> Color.Gray
                             },
                             contentColor = Color.White,
                             shape = CircleShape
