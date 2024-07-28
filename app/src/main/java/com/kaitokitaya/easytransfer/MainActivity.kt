@@ -70,11 +70,6 @@ class MainActivity : ComponentActivity() {
             MobileAds.initialize(this@MainActivity) {}
         }
 
-        // Background executing
-        Intent(this, ForegroundService::class.java).also {
-            ContextCompat.startForegroundService(this, it)
-        }
-
         Timber.plant(Timber.DebugTree())
         enableEdgeToEdge()
         val connectiveManagerWrapper = ConnectiveManagerWrapper(context = this)
@@ -129,13 +124,21 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun onGrantedPermission() {
+        GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
+        // Background executing
+        Intent(this, ForegroundService::class.java).also {
+            ContextCompat.startForegroundService(this, it)
+        }
+    }
+
 
     // Show dialog on the screen
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions.entries.all { it.value }) {
-            GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
+            onGrantedPermission()
         } else {
             GlobalSettingsProvider.setAppServiceState(AppServiceState.Unavailable)
         }
@@ -146,7 +149,7 @@ class MainActivity : ComponentActivity() {
     private val manageAccessStorageLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (Environment.isExternalStorageManager()) {
-                GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
+                onGrantedPermission()
             } else {
                 GlobalSettingsProvider.setAppServiceState(AppServiceState.Unavailable)
             }
@@ -158,7 +161,7 @@ class MainActivity : ComponentActivity() {
                 ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
             }
             if (unGrantedPermissions.isEmpty()) {
-                GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
+                onGrantedPermission()
             } else {
                 GlobalSettingsProvider.setAppServiceState(AppServiceState.Unavailable)
             }
@@ -169,7 +172,7 @@ class MainActivity : ComponentActivity() {
         if (!Environment.isExternalStorageManager()) {
             GlobalSettingsProvider.setAppServiceState(AppServiceState.Unavailable)
         } else {
-            GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
+            onGrantedPermission()
         }
     }
 
@@ -193,7 +196,7 @@ class MainActivity : ComponentActivity() {
         }
         when {
             unGrantedPermissions.isEmpty() -> {
-                GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
+                onGrantedPermission()
             }
             // shouldShowRequestPermissionRationale shows when you denied to grant the permission
             unGrantedPermissions.any { ActivityCompat.shouldShowRequestPermissionRationale(this, it) } -> {

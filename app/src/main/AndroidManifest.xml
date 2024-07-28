@@ -30,7 +30,8 @@
         android:theme="@style/Theme.EasyTransfer"
         tools:targetApi="31">
         <service
-            android:name=".ForegroundService"/>
+            android:name=".ForegroundService"
+            android:foregroundServiceType="dataSync"/>
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${ADS_PROJECT_ID}"/>
