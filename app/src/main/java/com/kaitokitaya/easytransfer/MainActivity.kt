@@ -8,11 +8,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
-import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -20,17 +19,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.MobileAds
+import com.kaitokitaya.easytransfer.global.AppServiceState
+import com.kaitokitaya.easytransfer.global.GlobalSettingsProvider
 import com.kaitokitaya.easytransfer.screen.howToUseScreen.HowToUseScreen
 import com.kaitokitaya.easytransfer.httpServer.ConnectiveManagerWrapper
-import com.kaitokitaya.easytransfer.httpServer.HttpClient
 import com.kaitokitaya.easytransfer.httpServer.HttpServer
 import com.kaitokitaya.easytransfer.screen.informationScreen.InformationScreen
 import com.kaitokitaya.easytransfer.screen.mainScreen.MainScreen
 import com.kaitokitaya.easytransfer.screen.mainScreen.MainScreenViewModel
 import com.kaitokitaya.easytransfer.screen.privacyPolicyScreen.PrivacyPolicyScreen
 import com.kaitokitaya.easytransfer.router.AppRouter
-import com.kaitokitaya.easytransfer.screen.splashScreen.SplashScreen
-import com.kaitokitaya.easytransfer.screen.splashScreen.SplashScreenViewModel
 import com.kaitokitaya.easytransfer.screen.termsOfUseScreen.TermsOfUseScreen
 import com.kaitokitaya.easytransfer.ui.theme.EasyTransferTheme
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +37,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 
-class MainActivity : CustomActivity() {
+class MainActivity : ComponentActivity() {
     private val earlierModelPermissions = arrayOf(
         Manifest.permission.READ_EXTERNAL_STORAGE,
         Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -52,9 +50,14 @@ class MainActivity : CustomActivity() {
     )
 
     private val mainScreenViewModel = MainScreenViewModel(
-//        connectiveManagerWrapper = connectiveManagerWrapper,
-//        httpServer = httpServer,
-        startStorageAccessPermissionRequest = {}
+        checkPermissions = {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                checkManageExternalStoragePermission()
+            } else {
+                checkAndRequestStorageAccessPermission()
+            }
+        },
+        requestPermissions = { requestPermissions() }
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,8 +80,12 @@ class MainActivity : CustomActivity() {
         val connectiveManagerWrapper = ConnectiveManagerWrapper(context = this)
         // When calling `registerCallback()` in initializer it will crash on `onCreate()` phase.
         connectiveManagerWrapper.registerCallback()
+
         val httpServer = HttpServer(connectiveManagerWrapper = connectiveManagerWrapper)
-        mainScreenViewModel.initialize(httpServer, connectiveManagerWrapper)
+        mainScreenViewModel.initialize(
+            server = httpServer,
+            connectiveManager = connectiveManagerWrapper,
+        )
         setContent {
             val navController = rememberNavController()
             EasyTransferTheme {
@@ -127,50 +134,92 @@ class MainActivity : CustomActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        permissions.entries.all { it.value }
+        if (permissions.entries.all { it.value }) {
+            GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
+        } else {
+            GlobalSettingsProvider.setAppServiceState(AppServiceState.Unavailable)
+        }
     }
 
     // Move to settings screen in Android
-    private val activityResultLauncher =
+    @RequiresApi(Build.VERSION_CODES.R)
+    private val manageAccessStorageLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            Toast.makeText(this, "Storage Permissions $result", Toast.LENGTH_SHORT).show()
+            if (Environment.isExternalStorageManager()) {
+                GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
+            } else {
+                GlobalSettingsProvider.setAppServiceState(AppServiceState.Unavailable)
+            }
+        }
+
+    private val storagePermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val unGrantedPermissions = earlierModelPermissions.filter {
+                ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+            }
+            if (unGrantedPermissions.isEmpty()) {
+                GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
+            } else {
+                GlobalSettingsProvider.setAppServiceState(AppServiceState.Unavailable)
+            }
         }
 
     @RequiresApi(Build.VERSION_CODES.R)
-    fun checkManageExternalPermission(): Boolean {
-        return Environment.isExternalStorageManager()
+    fun checkManageExternalStoragePermission() {
+        if (!Environment.isExternalStorageManager()) {
+            GlobalSettingsProvider.setAppServiceState(AppServiceState.Unavailable)
+        } else {
+            GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.R)
-    open fun requestManageExternalStoragePermission() {
+    private fun requestManageExternalStoragePermission() {
         val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
         intent.data = Uri.parse("package:${applicationContext.packageName}")
-        activityResultLauncher.launch(intent)
+        manageAccessStorageLauncher.launch(intent)
+    }
+
+    private fun openSettingsStorageAccessPermission() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        intent.data = Uri.parse("package:${applicationContext.packageName}")
+        storagePermissionLauncher.launch(intent)
     }
 
     // Use before Build code R
-    private fun checkAndRequestPermission() {
-        val unGrantedPermissions = laterModelPermissions.filter {
+    private fun checkAndRequestStorageAccessPermission() {
+        val unGrantedPermissions = earlierModelPermissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
         when {
             unGrantedPermissions.isEmpty() -> {
-
+                GlobalSettingsProvider.setAppServiceState(AppServiceState.FullAccess)
             }
             // shouldShowRequestPermissionRationale shows when you denied to grant the permission
             unGrantedPermissions.any { ActivityCompat.shouldShowRequestPermissionRationale(this, it) } -> {
-
+                GlobalSettingsProvider.setAppServiceState(AppServiceState.Unavailable)
             }
 
             else -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    requestPermissionArray(laterModelPermissions)
-                } else {
-                    requestPermissionArray(earlierModelPermissions)
-                }
+                requestPermissionArray()
             }
         }
+    }
 
+    private fun requestPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            requestManageExternalStoragePermission()
+        } else {
+            openSettingsStorageAccessPermission()
+        }
+    }
+
+    private fun requestPermissionArray() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionArray(laterModelPermissions)
+        } else {
+            requestPermissionArray(earlierModelPermissions)
+        }
     }
 
     private fun requestPermissionArray(permissionList: Array<String>) {
@@ -180,7 +229,5 @@ class MainActivity : CustomActivity() {
     companion object {
         val TAG: String = MainActivity::class.java.simpleName
     }
-
-
 }
 

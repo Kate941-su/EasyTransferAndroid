@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class GlobalSettingsManger {
-    private val _globalSettingsFlow = MutableStateFlow(GlobalSettings(appServiceState = AppServiceState.Waiting))
+    private val _globalSettingsFlow = MutableStateFlow(GlobalSettings(appServiceState = AppServiceState.Initializing))
     val globalSettings: StateFlow<GlobalSettings> = _globalSettingsFlow.asStateFlow()
 
     fun changeAppServiceState(state: AppServiceState) {

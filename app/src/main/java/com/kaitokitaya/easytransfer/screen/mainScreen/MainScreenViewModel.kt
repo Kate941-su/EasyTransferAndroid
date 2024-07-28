@@ -3,6 +3,9 @@ package com.kaitokitaya.easytransfer.screen.mainScreen
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaitokitaya.easytransfer.global.AppServiceState
+import com.kaitokitaya.easytransfer.global.GlobalSettings
+import com.kaitokitaya.easytransfer.global.GlobalSettingsProvider
 import com.kaitokitaya.easytransfer.httpServer.ConnectiveManagerWrapper
 import com.kaitokitaya.easytransfer.httpServer.HttpServer
 import com.kaitokitaya.easytransfer.screen.mainScreen.model.ServerStatus
@@ -15,12 +18,14 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.io.File
 
 class MainScreenViewModel(
 //    private val connectiveManagerWrapper: ConnectiveManagerWrapper,
 //    private val httpServer: HttpServer,
-    val startStorageAccessPermissionRequest: VoidCallback
+    private val checkPermissions: VoidCallback,
+    private val requestPermissions: VoidCallback,
 ) : ViewModel() {
 
     private lateinit var connectiveManagerWrapper: ConnectiveManagerWrapper
@@ -35,38 +40,26 @@ class MainScreenViewModel(
     private val _isNeedRefreshFlow = MutableStateFlow<Boolean>(false)
     val isNeedRefresh: StateFlow<Boolean> = _isNeedRefreshFlow.asStateFlow()
 
+    private val _appServiceStateFlow = MutableStateFlow<AppServiceState>(AppServiceState.Initializing)
+    val appServiceState: StateFlow<AppServiceState> = _appServiceStateFlow.asStateFlow()
+
+    companion object {
+        private val TAG = MainScreenViewModel::class.java.simpleName
+    }
+
     init {
-//        viewModelScope.launch {
-//            combine(
-//                httpServer.isNeedRefresh,
-//                connectiveManagerWrapper.isAvailable
-//            ) { isNeedRefreshValue, isAvailableValue ->
-//                Pair(
-//                    isNeedRefreshValue,
-//                    isAvailableValue
-//                )
-//            }.collect { (isNeedRefreshValue, isAvailableValue) ->
-//                _isNeedRefreshFlow.update {
-//                    isNeedRefreshValue
-//                }
-//                if (isAvailableValue) {
-//                    if (_serverStatusFlow.value == ServerStatus.Unavailable) {
-//                        _serverStatusFlow.update {
-//                            ServerStatus.Standby
-//                        }
-//                    }
-//                } else {
-//                    if (_serverStatusFlow.value != ServerStatus.Unavailable) {
-//                        _serverStatusFlow.update {
-//                            httpServer.gracefulUnavailable(_serverStatusFlow.value)
-//                        }
-//                    }
-//                }
-//            }
-//        }
+        viewModelScope.launch {
+            GlobalSettingsProvider.globalSettingsState.collect { state ->
+                Timber.tag(TAG).d("Current state is $state")
+                _appServiceStateFlow.update {
+                    state.appServiceState
+                }
+            }
+        }
     }
 
     fun initialize(server: HttpServer, connectiveManager: ConnectiveManagerWrapper) {
+        checkPermissions()
         httpServer = server
         connectiveManagerWrapper = connectiveManager
         viewModelScope.launch {
@@ -156,6 +149,10 @@ class MainScreenViewModel(
                 else -> it
             }
         }
+    }
+
+    fun onTapGoSettings() {
+        requestPermissions()
     }
 
     fun getDirectoryItem(): List<File>? {

@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -50,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +64,7 @@ import androidx.core.content.ContextCompat.startActivity
 import com.kaitokitaya.easytransfer.R
 import com.kaitokitaya.easytransfer.adsComponents.AdmobBanner
 import com.kaitokitaya.easytransfer.extensions.context.goToLink
+import com.kaitokitaya.easytransfer.global.AppServiceState
 import com.kaitokitaya.easytransfer.httpServer.HttpServer
 import com.kaitokitaya.easytransfer.screen.mainScreen.model.ServerStatus
 import com.kaitokitaya.easytransfer.originalType.VoidCallback
@@ -79,11 +83,11 @@ fun MainScreen(
     val ipAddress = viewModel.ipAddress.collectAsState()
     val serverStatus = viewModel.serverStatus.collectAsState()
     val isNeedRefresh = viewModel.isNeedRefresh.collectAsState()
+    val appServiceState = viewModel.appServiceState.collectAsState()
 
     val transition = updateTransition(targetState = isNeedRefresh.value, label = "")
     val animatedColor by transition.animateColor(
-        transitionSpec = { tween(durationMillis = 1000) },
-        label = ""
+        transitionSpec = { tween(durationMillis = 1000) }, label = ""
     ) {
         if (it) Color(0xFFFF7043)
         else Color(0x00FF7043)
@@ -92,8 +96,7 @@ fun MainScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        viewModel.startStorageAccessPermissionRequest()
+    LaunchedEffect(appServiceState.value) {
         val dir = viewModel.getDirectoryItem()
         Timber.tag("MainScreen").d(dir?.toString())
     }
@@ -105,6 +108,7 @@ fun MainScreen(
         drawerState = drawerState,
         scope = scope,
         isNeedRefresh = isNeedRefresh.value,
+        appServiceState = appServiceState.value,
         onTapRefresh = {
             viewModel.onRefresh()
         },
@@ -119,6 +123,7 @@ fun MainScreen(
         },
         onTapHowToUse = onTapHowToUse,
         onTapInformation = onTapInformation,
+        onTapGoSettings = { viewModel.onTapGoSettings() }
     )
 }
 
@@ -131,10 +136,12 @@ fun MainPage(
     drawerState: DrawerState,
     scope: CoroutineScope,
     isNeedRefresh: Boolean,
+    appServiceState: AppServiceState,
     onTapRefresh: VoidCallback,
     onTapPowerButton: VoidCallback,
     onTapHowToUse: VoidCallback,
     onTapInformation: VoidCallback,
+    onTapGoSettings: VoidCallback,
 ) {
     val modalWindowWidth = LocalConfiguration.current.screenWidthDp * 2 / 3
     val context = LocalContext.current
@@ -158,11 +165,11 @@ fun MainPage(
             NavigationDrawerItem(label = { Text(text = "Information") }, selected = false, onClick = onTapInformation)
         }
     }, drawerState = drawerState) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {},
-                    navigationIcon = {
+        Scaffold(topBar = {
+            when (appServiceState) {
+                AppServiceState.Initializing -> {}
+                else -> {
+                    TopAppBar(title = {}, navigationIcon = {
                         IconButton(onClick = {
                             scope.launch {
                                 if (drawerState.isOpen) drawerState.close() else drawerState.open()
@@ -170,91 +177,110 @@ fun MainPage(
                         }) {
                             Icon(imageVector = Icons.Default.Menu, contentDescription = "Menu")
                         }
-                    }
-                )
+                    })
+                }
             }
-        ) { innerPadding ->
-            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom) {
-                Box(
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .fillMaxWidth()
-                        .fillMaxHeight(),
-                    contentAlignment = Alignment.Center
+        }) { innerPadding ->
+            when (appServiceState) {
+                AppServiceState.FullAccess, AppServiceState.OnlyMedia -> Column(
+                    modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .fillMaxWidth()
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
                     ) {
-
-                        FloatingActionButton(
-                            onClick = onTapPowerButton,
-                            modifier = Modifier.size(100.dp),
-                            containerColor = when (serverStatus) {
-                                ServerStatus.Unavailable -> Color.Gray
-                                ServerStatus.Standby -> Color.Green
-                                ServerStatus.Launching, ServerStatus.Shutdown, ServerStatus.Refresh -> Color.Yellow
-                                ServerStatus.Working -> Color.Red
-                                else -> Color.Gray
-                            },
-                            contentColor = Color.White,
-                            shape = CircleShape
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(id = R.drawable.baseline_power_settings_new_24),
-                                contentDescription = "",
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "Server Status 👉 ")
-                            Text(
-                                text = serverStatus.stateName,
-                                style = TextStyle(
-                                    color = Color.Red,
-                                    fontWeight = FontWeight.Bold
+
+                            FloatingActionButton(
+                                onClick = onTapPowerButton,
+                                modifier = Modifier.size(100.dp),
+                                containerColor = when (serverStatus) {
+                                    ServerStatus.Unavailable -> Color.Gray
+                                    ServerStatus.Standby -> Color.Green
+                                    ServerStatus.Launching, ServerStatus.Shutdown, ServerStatus.Refresh -> Color.Yellow
+                                    ServerStatus.Working -> Color.Red
+                                },
+                                contentColor = Color.White,
+                                shape = CircleShape
+                            ) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(id = R.drawable.baseline_power_settings_new_24),
+                                    contentDescription = "",
+                                    modifier = Modifier.fillMaxSize()
                                 )
-                            )
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "IP address 👉")
-                            if (ipAddress != null && serverStatus == ServerStatus.Working) {
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "Server Status 👉 ")
                                 Text(
-                                    text = "$ipAddress:${HttpServer.PORT}",
-                                    style = TextStyle(
-                                        color = Color.Red,
-                                        fontWeight = FontWeight.Bold
+                                    text = serverStatus.stateName, style = TextStyle(
+                                        color = Color.Red, fontWeight = FontWeight.Bold
                                     )
                                 )
                             }
-                        }
-                        ElevatedButton(
-                            onClick = { if (isNeedRefresh) onTapRefresh() },
-                            colors = ButtonDefaults.buttonColors(animatedColor),
-                            modifier = Modifier.padding(12.dp)
-                        ) {
-                            Text(
-                                text = "Refresh",
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = if (isNeedRefresh) Modifier.alpha(1.0F) else Modifier.alpha(.2F)
-                            )
-                        }
-                        if (serverStatus == ServerStatus.Unavailable) {
-                            Box {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "IP address 👉")
+                                if (ipAddress != null && serverStatus == ServerStatus.Working) {
+                                    Text(
+                                        text = "$ipAddress:${HttpServer.PORT}", style = TextStyle(
+                                            color = Color.Red, fontWeight = FontWeight.Bold
+                                        )
+                                    )
+                                }
+                            }
+                            ElevatedButton(
+                                onClick = { if (isNeedRefresh) onTapRefresh() },
+                                colors = ButtonDefaults.buttonColors(animatedColor),
+                                modifier = Modifier.padding(12.dp)
+                            ) {
                                 Text(
-                                    text = "Unable to provide service. \nCheck if you connected the device to Wi-Fi.",
-                                    color = Color.Red,
-                                    style = TextStyle(textAlign = TextAlign.Center),
+                                    text = "Refresh",
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    modifier = if (isNeedRefresh) Modifier.alpha(1.0F) else Modifier.alpha(.2F)
                                 )
                             }
+                            if (serverStatus == ServerStatus.Unavailable) {
+                                Box {
+                                    Text(
+                                        text = "Unable to provide service. \nCheck if you connected the device to Wi-Fi.",
+                                        color = Color.Red,
+                                        style = TextStyle(textAlign = TextAlign.Center),
+                                    )
+                                }
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                                .align(alignment = Alignment.BottomCenter)
+                        ) {
+//                        AdmobBanner()
                         }
                     }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                            .align(alignment = Alignment.BottomCenter)
-                    ) {
-//                        AdmobBanner()
+                }
+
+                AppServiceState.Initializing -> Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = Color.White),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(painter = painterResource(id = R.drawable.ic_main), contentDescription = "Splash Screen")
+                }
+
+                AppServiceState.Unavailable -> Column(
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(text = "You need to grant permissions to use this app.")
+                    TextButton(onClick = onTapGoSettings) {
+                        Text(text = "Tap to grant permissions")
                     }
                 }
             }
@@ -274,9 +300,11 @@ fun MainScreenPreview() {
         drawerState = DrawerState(initialValue = DrawerValue.Closed),
         scope = scope,
         isNeedRefresh = false,
+        appServiceState = AppServiceState.Unavailable,
         onTapRefresh = {},
         onTapPowerButton = {},
         onTapHowToUse = {},
         onTapInformation = {},
+        onTapGoSettings = {},
     )
 }
